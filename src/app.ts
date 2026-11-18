@@ -268,7 +268,10 @@ export function startApp() {
       s.lastErr = null;
       void loadAll(false);
     } catch (e) {
-      if (e instanceof ApiError && e.kind === "auth") { apiKey = store.get(K.key, ""); keyMsg(e.message, false); }
+      if (e instanceof ApiError && e.kind === "auth") {
+        apiKey = store.get(K.key, "");
+        keyMsg(/Pro key/.test(e.message) ? e.message : "CoinGecko rejected this key, so it wasn't saved. Copy it again from the Developer Dashboard (it starts with CG-).", false);
+      }
       else { store.set(K.key, apiKey); keyMsg("Saved, but CoinGecko couldn't be reached to check it: " + errText(e), null); }
     }
   };
