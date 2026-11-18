@@ -10,7 +10,6 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: false, // registered in src/main.ts
-      includeAssets: ["favicon.ico", "favicon.svg", "apple-touch-icon-180x180.png"],
       manifest: {
         name: "Crypto Risk Lab",
         short_name: "Risk Lab",
