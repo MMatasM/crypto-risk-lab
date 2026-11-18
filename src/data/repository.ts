@@ -115,6 +115,16 @@ export class Repository {
     return (d.coins ?? []).map(c => ({ id: String(c.id), name: String(c.name ?? c.id), symbol: String(c.symbol ?? ""), market_cap_rank: num(c.market_cap_rank) }));
   }
 
+  /** Saved copies of any age, without a request: shown at startup while fresh data loads. */
+  peekMarkets(): Loaded<Record<string, MarketCoin>> | null {
+    const s = this.store.get<Saved<Record<string, MarketCoin>> | null>(CACHE_PREFIX + "mkt", null);
+    return s ? { data: s.d, at: s.t, stale: this.now() - s.t >= MARKETS_TTL } : null;
+  }
+  peekHistory(id: string): Loaded<History> | null {
+    const s = this.store.get<Saved<History> | null>(CACHE_PREFIX + "h." + id, null);
+    return s ? { data: s.d, at: s.t, stale: this.now() - s.t >= HISTORY_TTL } : null;
+  }
+
   /** Drop saved history for coins no longer on the watchlist. */
   forgetHistory(id: string) { this.store.del(CACHE_PREFIX + "h." + id); }
 }

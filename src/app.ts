@@ -277,6 +277,11 @@ export function startApp() {
   addEventListener("online", () => { if (s.staleSince || s.lastErr) { setStatus("Back online. Updating…"); void loadAll(false); } });
   addEventListener("offline", () => setStatus("Offline: showing saved data"));
 
+  // Show whatever was saved last time straight away (even if old), then update in the background.
+  const savedMarkets = repo.peekMarkets();
+  if (savedMarkets) s.markets = { ...savedMarkets.data };
+  for (const id of s.watch) { const h = repo.peekHistory(id); if (h) raw[id] = h.data; }
+  computeAll();
   renderAll();
   void loadAll(false);
 }

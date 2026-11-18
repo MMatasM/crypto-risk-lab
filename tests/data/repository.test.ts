@@ -68,6 +68,16 @@ describe("Repository caching", () => {
     expect(r.stale).toBe(true);
     expect(r.data.closes).toEqual([1, 2]);
   });
+  it("hands out saved copies of any age for the instant first screen", async () => {
+    const f = fake(() => chart);
+    expect(f.repo.peekHistory("btc")).toBeNull();
+    await f.repo.history("btc");
+    f.advance(HISTORY_TTL + 1);
+    const p = f.repo.peekHistory("btc");
+    expect(p?.data.closes).toEqual([1, 2]);
+    expect(p?.stale).toBe(true);
+    expect(f.calls()).toBe(1);
+  });
   it("does not hide a rejected key behind old data", async () => {
     let fail = false;
     const f = fake(() => { if (fail) throw new ApiError("auth", "bad key"); return chart; });

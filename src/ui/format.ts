@@ -26,8 +26,12 @@ export const big = (v: number | null | undefined): string =>
   v == null || !Number.isFinite(v) ? "—" : new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", notation: "compact", maximumFractionDigits: 1 }).format(v);
 
 /** A signed percentage from a fraction (0.123 -> "+12.3%"). */
-export const pc = (v: number | null | undefined, d = 1): string =>
-  v == null || !Number.isFinite(v) ? "—" : (v > 0 ? "+" : "") + (v * 100).toFixed(d) + "%";
+export const pc = (v: number | null | undefined, d = 1): string => {
+  if (v == null || !Number.isFinite(v)) return "—";
+  const s = (v * 100).toFixed(d);
+  if (Number(s) === 0) return (0).toFixed(d) + "%"; // not "-0.0%" for a stablecoin
+  return (v > 0 ? "+" : "") + s + "%";
+};
 
 /** An unsigned percentage from a fraction. */
 export const pcu = (v: number | null | undefined, d = 0): string =>

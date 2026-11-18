@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ApiError, CoinGeckoClient, GAP_KEYED, GAP_KEYLESS } from "../../src/data/coingecko";
+import { ApiError, CoinGeckoClient, MIN_GAP_KEYED, MIN_GAP_KEYLESS, PER_MIN_KEYED, PER_MIN_KEYLESS } from "../../src/data/coingecko";
 
 /** A client on a fake clock: sleeping just moves time forward. Replies come from a script. */
 function harness(replies: (url: string, n: number) => Response | Error, key = "") {
@@ -33,28 +33,32 @@ describe("CoinGecko client", () => {
     expect(h.calls[1].url).toContain("/search?query=btc&x_cg_demo_api_key=CG-abc");
   });
 
-  it("spaces requests out: wider without a key, narrower with one", async () => {
-    for (const [key, gap] of [["", GAP_KEYLESS], ["CG-k", GAP_KEYED]] as const) {
+  it("never makes more requests in any rolling minute than the budget allows", async () => {
+    for (const [key, perMin, minGap] of [["", PER_MIN_KEYLESS, MIN_GAP_KEYLESS], ["CG-k", PER_MIN_KEYED, MIN_GAP_KEYED]] as const) {
       const h = harness(() => json([]), key);
-      await Promise.all([h.client.get("/a"), h.client.get("/b"), h.client.get("/c")]);
-      expect(h.calls[1].at - h.calls[0].at).toBeGreaterThanOrEqual(gap);
-      expect(h.calls[2].at - h.calls[1].at).toBeGreaterThanOrEqual(gap);
+      await Promise.all(Array.from({ length: perMin * 3 }, (_, i) => h.client.get("/p" + i)));
+      const at = h.calls.map(c => c.at);
+      for (let i = 1; i < at.length; i++) expect(at[i] - at[i - 1]).toBeGreaterThanOrEqual(minGap);
+      for (let i = perMin; i < at.length; i++) expect(at[i] - at[i - perMin]).toBeGreaterThanOrEqual(60000);
+      // The first requests (the coin on screen, Bitcoin) go out quickly.
+      expect(at[perMin - 1] - at[0]).toBeLessThan(perMin * minGap + 1);
     }
   });
 
-  it("waits and retries after a 429, then widens the spacing", async () => {
+  it("waits out the minute and retries after a 429, then uses a smaller budget", async () => {
     const h = harness((_, n) => (n === 1 ? json({}, 429) : json({ fine: true })));
-    const before = h.client.gap();
+    const before = h.client.perMinute();
     await expect(h.client.get("/x")).resolves.toEqual({ fine: true });
     expect(h.calls.length).toBe(2);
-    expect(h.calls[1].at - h.calls[0].at).toBeGreaterThanOrEqual(15000);
+    expect(h.calls[1].at - h.calls[0].at).toBeGreaterThanOrEqual(20000);
     expect(h.statuses.some(s => s.includes("rate limit"))).toBe(true);
-    expect(h.client.gap()).toBeGreaterThan(before);
+    expect(h.client.perMinute()).toBeLessThan(before);
   });
 
-  it("treats a network error as a likely throttle and retries", async () => {
-    const h = harness((_, n) => (n === 1 ? new TypeError("Failed to fetch") : json(1)));
+  it("treats a network error as a likely throttle and keeps retrying (as seen live: status 0 after 4 calls)", async () => {
+    const h = harness((_, n) => (n <= 3 ? new TypeError("Failed to fetch") : json(1)));
     await expect(h.client.get("/x")).resolves.toBe(1);
+    expect(h.calls.length).toBe(4);
   });
 
   it("gives up with a clear message when the limit never lifts", async () => {
