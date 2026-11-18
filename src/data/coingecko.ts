@@ -27,7 +27,12 @@ export interface ClientOptions {
   sleep?: (ms: number) => Promise<void>;
   isOnline?: () => boolean;
   base?: string;
+  /** Keeps the request budget across page reloads (otherwise each reload would start a fresh minute). */
+  memory?: { load(): Pace | null; save(p: Pace): void };
 }
+
+/** The pacing state worth keeping across reloads. */
+export interface Pace { recent: number[]; penalty: number; pauseUntil: number }
 
 /**
  * Request budget per rolling minute. Measured against the live API (Nov 2026): keyless CoinGecko
@@ -52,6 +57,8 @@ export class CoinGeckoClient {
   /** Lowered after CoinGecko throttles us, raised back slowly after successes. */
   private penalty = 0;
   private okStreak = 0;
+  /** After a throttle, nothing is sent before this time (survives reloads). */
+  private pauseUntil = 0;
   private seq = 0;
   private shared = new Map<string, Promise<unknown>>();
   private readonly fetchFn: (url: string) => Promise<Response>;
@@ -66,6 +73,13 @@ export class CoinGeckoClient {
     this.sleep = opts.sleep ?? (ms => new Promise(r => setTimeout(r, ms)));
     this.isOnline = opts.isOnline ?? (() => (typeof navigator === "undefined" ? true : navigator.onLine !== false));
     this.base = opts.base ?? API_BASE;
+    const saved = opts.memory?.load();
+    if (saved) {
+      const now = this.now();
+      this.recent = (saved.recent ?? []).filter(t => typeof t === "number" && now - t < WINDOW && t <= now);
+      this.penalty = Math.min(26, Math.max(0, saved.penalty | 0));
+      this.pauseUntil = Math.min(saved.pauseUntil || 0, now + 60000);
+    }
   }
 
   /** Requests allowed per rolling minute right now. */
@@ -83,6 +97,7 @@ export class CoinGeckoClient {
     let wait = last + minGap - now;
     const limit = this.perMinute();
     if (this.recent.length >= limit) wait = Math.max(wait, this.recent[this.recent.length - limit] + WINDOW - now);
+    wait = Math.max(wait, this.pauseUntil - now);
     return Math.max(0, wait);
   }
 
@@ -104,6 +119,10 @@ export class CoinGeckoClient {
     this.shared.set(path, p);
     void this.pump();
     return p as Promise<T>;
+  }
+
+  private remember() {
+    this.opts.memory?.save({ recent: this.recent, penalty: this.penalty, pauseUntil: this.pauseUntil });
   }
 
   private status(text: string) { this.opts.onStatus?.(text); }
@@ -137,6 +156,7 @@ export class CoinGeckoClient {
         await this.sleep(wait);
       }
       this.recent.push(this.now());
+      this.remember();
       let res: Response;
       try {
         res = await this.fetchFn(this.url(path));
@@ -144,10 +164,10 @@ export class CoinGeckoClient {
         if (!this.isOnline()) throw new ApiError("offline", "You're offline. Showing saved data where there is some.");
         // A throttled reply arrives without CORS headers, so the browser reports a network error.
         if (attempt < MAX_ATTEMPTS) { await this.backOff(attempt, "CoinGecko didn't answer (usually its free rate limit)."); continue; }
-        throw new ApiError("network", "Couldn't reach CoinGecko. Check your connection, wait a minute, then press Refresh.");
+        throw new ApiError("network", "CoinGecko isn't answering, most likely because of its free rate limit. Wait a couple of minutes and press Refresh, or add a free Demo key in Data settings.");
       }
       if (res.ok) {
-        if (++this.okStreak >= 8 && this.penalty > 0) { this.penalty--; this.okStreak = 0; }
+        if (++this.okStreak >= 8 && this.penalty > 0) { this.penalty--; this.okStreak = 0; this.remember(); }
         try { return await res.json(); }
         catch { throw new ApiError("http", "CoinGecko sent a reply the app couldn't read."); }
       }
@@ -170,6 +190,8 @@ export class CoinGeckoClient {
     this.penalty = Math.min(this.penalty + 1, 26);
     this.okStreak = 0;
     const w = Math.min(60000, 20000 * attempt);
+    this.pauseUntil = this.now() + w;
+    this.remember();
     this.status(`${why} Retrying in ${w / 1000}s…`);
     await this.sleep(w);
   }

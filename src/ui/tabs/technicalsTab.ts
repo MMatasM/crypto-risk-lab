@@ -1,7 +1,7 @@
 import type { Analysis } from "../../analysis/scoring";
 import type { Level, Sig, Technicals } from "../../analysis/technicals";
 import type { History } from "../../data/types";
-import { subChart, taChart, type Overlays } from "../charts";
+import { subChart, taChart, taLeftPad, type Overlays } from "../charts";
 import { cls, esc, eur, pc, pill } from "../format";
 
 export function techTab(a: Analysis, h: History, t: Technicals, show: Overlays): string {
@@ -16,8 +16,8 @@ export function techTab(a: Analysis, h: History, t: Technicals, show: Overlays):
     ${([["ema", "Moving averages"], ["bb", "Bollinger bands"], ["lv", "Support / resistance"], ["fib", "Fibonacci"]] as [keyof Overlays, string][]).map(([k, l]) => `<button type="button" data-ov="${k}" aria-pressed="${!!show[k]}">${l}</button>`).join("")}</div>
   <div class="chart">${taChart(h, t, show)}</div>
   <div class="legend"><span><i style="background:var(--ink)"></i>Price</span>${show.ema ? `<span><i style="background:var(--c3)"></i>EMA 20</span><span><i style="background:var(--c1)"></i>EMA 50</span>${t.e200 ? `<span><i style="background:var(--c2)"></i>EMA 200</span>` : ""}` : ""}${show.bb ? `<span><i style="background:var(--band);height:10px"></i>Bollinger (20, 2)</span>` : ""}</div>
-  <div class="chart">${subChart("rsi", h, t, a)}</div>
-  <div class="chart" style="margin-top:4px">${subChart("macd", h, t, a)}</div>
+  <div class="chart">${subChart("rsi", h, t, a, taLeftPad(h, t, show))}</div>
+  <div class="chart" style="margin-top:4px">${subChart("macd", h, t, a, taLeftPad(h, t, show))}</div>
   <div class="legend"><span><i style="background:var(--c1)"></i>MACD (12, 26)</span><span><i style="background:var(--accent)"></i>Signal (9)</span><span><i style="background:var(--good);opacity:.5;height:8px"></i>Histogram</span></div>
   ${groups.map(g => {
     const rs = t.rows.filter(r => r.group === g);

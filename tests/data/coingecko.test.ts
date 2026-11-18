@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ApiError, CoinGeckoClient, MIN_GAP_KEYED, MIN_GAP_KEYLESS, PER_MIN_KEYED, PER_MIN_KEYLESS } from "../../src/data/coingecko";
+import { ApiError, CoinGeckoClient, type Pace, MIN_GAP_KEYED, MIN_GAP_KEYLESS, PER_MIN_KEYED, PER_MIN_KEYLESS } from "../../src/data/coingecko";
 
 /** A client on a fake clock: sleeping just moves time forward. Replies come from a script. */
 function harness(replies: (url: string, n: number) => Response | Error, key = "") {
@@ -43,6 +43,21 @@ describe("CoinGecko client", () => {
       // The first requests (the coin on screen, Bitcoin) go out quickly.
       expect(at[perMin - 1] - at[0]).toBeLessThan(perMin * minGap + 1);
     }
+  });
+
+  it("remembers the budget across a page reload", async () => {
+    let t = 5_000_000, saved: Pace | null = null;
+    const calls: number[] = [];
+    const make = () => new CoinGeckoClient({
+      getKey: () => "", now: () => t, sleep: async ms => { t += ms; }, isOnline: () => true,
+      fetch: async () => { calls.push(t); return json([]); },
+      memory: { load: () => saved, save: p => { saved = structuredClone(p); } },
+    });
+    const first = make();
+    for (let i = 0; i < PER_MIN_KEYLESS; i++) await first.get("/a" + i);
+    const second = make(); // the page was reloaded
+    await second.get("/b");
+    expect(calls[PER_MIN_KEYLESS] - calls[0]).toBeGreaterThanOrEqual(60000);
   });
 
   it("waits out the minute and retries after a 429, then uses a smaller budget", async () => {

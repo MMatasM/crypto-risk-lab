@@ -3,7 +3,7 @@
  * and redraws the screens. The screens only read state and call the actions defined here.
  */
 import { analyze, MIN_DAYS } from "./analysis/scoring";
-import { ApiError, CoinGeckoClient } from "./data/coingecko";
+import { ApiError, CoinGeckoClient, type Pace } from "./data/coingecko";
 import { BACKGROUND, Repository, URGENT } from "./data/repository";
 import { store } from "./data/storage";
 import type { History, MarketCoin } from "./data/types";
@@ -15,7 +15,7 @@ import type { Actions, AppState, DiscoverState } from "./ui/state";
 import { renderList } from "./ui/watchlist";
 
 const DEFAULT_WATCH = ["bitcoin", "ethereum", "ripple", "solana", "monero"];
-const K = { key: "crl.key", watch: "crl.watch", sel: "crl.sel", ta: "crl.ta", disc: "crl.disc" };
+const K = { key: "crl.key", watch: "crl.watch", sel: "crl.sel", ta: "crl.ta", disc: "crl.disc", pace: "crl.pace" };
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -64,7 +64,11 @@ export function startApp() {
   const raw: Record<string, History> = {};
 
   const setStatus = (t: string) => { $("status").textContent = t; };
-  const client = new CoinGeckoClient({ getKey: () => apiKey, onStatus: setStatus });
+  const client = new CoinGeckoClient({
+    getKey: () => apiKey,
+    onStatus: setStatus,
+    memory: { load: () => store.get<Pace | null>(K.pace, null), save: p => { store.set(K.pace, p); } },
+  });
   const repo = new Repository(client, store);
 
   const renderAll = () => { renderList(s, actions); renderDesk(s, actions); };

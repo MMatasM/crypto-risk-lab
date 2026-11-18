@@ -20,6 +20,23 @@ function scaleY(vals: number[], H: number, pt: number, pb: number) {
   return { ys, ticks, lo, hi };
 }
 
+/** Left margin wide enough for the longest axis label (tiny prices have long labels). */
+function leftPad(ticks: number[]): number {
+  return Math.max(58, Math.ceil(Math.max(...ticks.map(v => eurShort(v).length)) * 6.6) + 10);
+}
+
+/** Values the technicals chart is scaled to (so the RSI and MACD charts under it can line up). */
+function taValues(h: History, t: Technicals, show: Overlays): number[] {
+  const vals = [...h.closes];
+  if (show.bb) vals.push(...t.bb.up.filter((v): v is number => v != null), ...t.bb.lo.filter((v): v is number => v != null));
+  return vals;
+}
+
+/** The technicals chart's left margin, for the charts drawn under it. */
+export function taLeftPad(h: History, t: Technicals, show: Overlays): number {
+  return leftPad(scaleY(taValues(h, t, show), 320, 12, 26).ticks);
+}
+
 function linePath(arr: Series | readonly number[], xs: (i: number) => number, ys: (v: number) => number): string {
   let d = "", on = false;
   arr.forEach((v, i) => {
@@ -43,9 +60,10 @@ function yAxis(ticks: number[], ys: (v: number) => number, pl: number, W: number
 }
 
 export function priceChart(h: History, a: Analysis): string {
-  const c = h.closes, n = c.length, W = 760, H = 300, pl = 58, pr = 12, pt = 12, pb = 26, fwd = 30;
-  const xs = (i: number) => pl + (i / (n - 1 + fwd)) * (W - pl - pr);
+  const c = h.closes, n = c.length, W = 760, H = 300, pr = 12, pt = 12, pb = 26, fwd = 30;
   const { ys, ticks } = scaleY([...c, a.model.lo95, a.model.hi95], H, pt, pb);
+  const pl = leftPad(ticks);
+  const xs = (i: number) => pl + (i / (n - 1 + fwd)) * (W - pl - pr);
   const x0 = xs(n - 1), x1 = xs(n - 1 + fwd), py = ys(a.p);
   const cone = (l: number, u: number) => `M${x0} ${py} L${x1} ${ys(u)} L${x1} ${ys(l)} Z`;
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Price over the last year with averages and a 30-day range cone">
@@ -60,11 +78,10 @@ export function priceChart(h: History, a: Analysis): string {
 }
 
 export function taChart(h: History, t: Technicals, show: Overlays): string {
-  const c = h.closes, n = c.length, W = 760, H = 320, pl = 58, pr = 70, pt = 12, pb = 26;
+  const c = h.closes, n = c.length, W = 760, H = 320, pr = 70, pt = 12, pb = 26;
+  const { ys, ticks, lo, hi } = scaleY(taValues(h, t, show), H, pt, pb);
+  const pl = leftPad(ticks);
   const xs = (i: number) => pl + i / (n - 1) * (W - pl - pr);
-  const vals = [...c];
-  if (show.bb) vals.push(...t.bb.up.filter((v): v is number => v != null), ...t.bb.lo.filter((v): v is number => v != null));
-  const { ys, ticks, lo, hi } = scaleY(vals, H, pt, pb);
   const inR = (v: number) => v >= lo && v <= hi;
   let o = "";
   if (show.bb) {
@@ -88,8 +105,8 @@ export function taChart(h: History, t: Technicals, show: Overlays): string {
     <path d="${linePath(c, xs, ys)}" fill="none" stroke="var(--ink)" stroke-width="1.7" stroke-linejoin="round"/><circle cx="${xs(n - 1)}" cy="${ys(c[n - 1])}" r="3.5" fill="var(--accent)"/></svg>`;
 }
 
-export function subChart(kind: "rsi" | "macd", h: History, t: Technicals, a: Analysis): string {
-  const n = h.closes.length, W = 760, H = 130, pl = 58, pr = 70, pt = 10, pb = 20;
+export function subChart(kind: "rsi" | "macd", h: History, t: Technicals, a: Analysis, pl = 58): string {
+  const n = h.closes.length, W = 760, H = 130, pr = 70, pt = 10, pb = 20;
   const xs = (i: number) => pl + i / (n - 1) * (W - pl - pr);
   if (kind === "rsi") {
     const ys = (v: number) => pt + (1 - v / 100) * (H - pt - pb);

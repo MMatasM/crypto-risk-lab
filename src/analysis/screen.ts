@@ -20,7 +20,7 @@ export function isNoise(m: MarketCoin, usdInEur = 0.9): boolean {
   if (WRAPPED.test(name) || TOKENIZED.test(name) || /^pc0{3,}\d+$/.test(s)) return true;
   const c30 = m.price_change_percentage_30d_in_currency, c7 = m.price_change_percentage_7d_in_currency;
   const still = Math.abs(c30 ?? 0) < 2.5 && Math.abs(c7 ?? 0) < 2.5;
-  if (/usd|eur/i.test(s) && still) return true;
+  if (/usd|eur/i.test(s) && Math.abs(c30 ?? 0) < 5) return true; // dollar or euro coins, including slightly depegged ones
   const px = m.current_price ?? 0;
   const pegged = Math.abs(px / usdInEur - 1) < 0.03 || Math.abs(px - 1) < 0.03;
   if (still && (pegged || !m.total_volume)) return true;

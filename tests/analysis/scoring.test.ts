@@ -67,6 +67,8 @@ describe("Discover screen with real-world gaps", () => {
     expect(isNoise(coin({ symbol: "ousg", name: "Ondo Short-Term U.S. Government Bond Fund", current_price: 106.9 }))).toBe(true);
     expect(isNoise(coin({ symbol: "pc0000031", name: "Tradable NA Rent Financing Platform SSTN" }))).toBe(true);
     expect(isNoise(coin({ symbol: "wbtc", name: "Wrapped Bitcoin" }))).toBe(true);
+    // Seen live: a slightly depegged dollar coin
+    expect(isNoise(coin({ symbol: "apxusd", name: "apxUSD", current_price: 0.8776, price_change_percentage_30d_in_currency: -2.3, price_change_percentage_7d_in_currency: -3.3 }), 0.91)).toBe(true);
   });
   it("keeps ordinary coins", () => {
     expect(isNoise(coin({ symbol: "xmr", name: "Monero", current_price: 300, price_change_percentage_30d_in_currency: -12, price_change_percentage_7d_in_currency: 4 }))).toBe(false);
