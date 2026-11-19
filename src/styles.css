@@ -150,3 +150,12 @@ td.r,th.r{text-align:right}
 .coin .err-note{grid-column:1/-1;font-size:.78rem;color:var(--bad)}
 .btn:disabled{opacity:.55;cursor:default}
 .btn:disabled:hover{border-color:var(--line)}
+
+/* Paper trading */
+tr.pick{cursor:pointer}
+tr.pick:hover td{background:var(--bg)}
+tr.pick.on td{background:var(--accent-soft)}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+.side{display:inline-block;padding:1px 8px;border-radius:999px;font-size:.76rem;font-weight:600}
+.side.buy{background:var(--good-bg);color:var(--good)} .side.sell{background:var(--bad-bg);color:var(--bad)}
+table.log td.reason{color:var(--muted);font-size:.82rem;min-width:240px}

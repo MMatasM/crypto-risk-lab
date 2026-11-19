@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16202A">
-<meta name="description" content="Crypto watchlist with risk and trend scores, technical indicators, 30-day ranges, a backtester and a top-250 screener.">
+<meta name="description" content="Crypto watchlist with risk and trend scores, technical indicators, 30-day ranges, a backtester, a top-250 screener and daily paper trading with fake money.">
 <title>Crypto Risk Lab</title>
 <link rel="icon" href="favicon.ico" sizes="48x48">
 <link rel="icon" href="favicon.svg" sizes="any" type="image/svg+xml">
@@ -21,6 +21,7 @@
     <div class="seg" role="group" aria-label="View">
       <button type="button" id="v-analyze" aria-pressed="true">Analyze</button>
       <button type="button" id="v-discover" aria-pressed="false">Discover</button>
+      <button type="button" id="v-paper" aria-pressed="false">Paper trading</button>
     </div>
     <button class="btn" id="refresh" type="button">Refresh</button>
     <button class="btn" id="settings-btn" type="button" aria-expanded="false" aria-controls="settings">Data settings</button>
@@ -50,7 +51,11 @@
   <section class="panel disc" id="disc"><div class="empty">Loading the top 250 coins…</div></section>
 </main>
 
-<p class="foot">Data: CoinGecko, daily closes for the last 365 days plus current market data. Everything is computed from past prices. It shows probabilities, rule states and screens, not promises or advice.</p>
+<main class="app" id="view-paper" hidden>
+  <section class="panel disc" id="paper"><div class="empty">Loading paper trading results…</div></section>
+</main>
+
+<p class="foot">Data: CoinGecko, daily closes for the last 365 days plus current market data. Everything is computed from past prices. Paper trading uses fake money only. It shows probabilities, rule states and screens, not promises or advice.</p>
 
 <script type="module" src="./src/main.ts"></script>
 </body>

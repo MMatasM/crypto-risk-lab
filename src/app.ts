@@ -5,13 +5,15 @@
 import { analyze, MIN_DAYS } from "./analysis/scoring";
 import { ApiError, CoinGeckoClient, type Pace } from "./data/coingecko";
 import { BACKGROUND, Repository, URGENT } from "./data/repository";
-import { store } from "./data/storage";
+import { CACHE_PREFIX, store } from "./data/storage";
 import type { History, MarketCoin } from "./data/types";
+import { emptyState } from "./paper/types";
 import type { Overlays } from "./ui/charts";
 import { renderDesk } from "./ui/desk";
 import { renderDiscover } from "./ui/discover";
 import { esc, stamp } from "./ui/format";
-import type { Actions, AppState, DiscoverState } from "./ui/state";
+import { renderPaper } from "./ui/paper";
+import type { Actions, AppState, DiscoverState, PaperData, View } from "./ui/state";
 import { renderList } from "./ui/watchlist";
 
 const DEFAULT_WATCH = ["bitcoin", "ethereum", "ripple", "solana", "monero"];
@@ -58,6 +60,7 @@ export function startApp() {
       sector: discPrefs.sector ?? "", tier: discPrefs.tier ?? "all", sort: discPrefs.sort ?? "mcap", hide: discPrefs.hide ?? true,
       data: null, at: null, stale: false, err: null, loading: false,
     },
+    paper: { data: null, at: null, stale: false, err: null, loading: false, coin: null, focus: null, logStrategy: "all", logAll: false },
   };
   if (!s.watch.includes(s.selected)) s.selected = "bitcoin";
   /** Raw daily history as loaded; s.hists holds it with the live price spliced in. */
@@ -163,6 +166,38 @@ export function startApp() {
     if (sector === d.sector) { d.loading = false; renderDiscover(s, actions); }
   }
 
+  /**
+   * The paper trading results are files published with the site (public/paper/), updated every night by
+   * the GitHub job. The last copy is kept in browser storage for offline use.
+   */
+  const PAPER_KEY = CACHE_PREFIX + "paper";
+  async function loadPaper() {
+    const p = s.paper;
+    if (p.loading) return;
+    p.loading = true; p.err = null;
+    if (!p.data) { const saved = store.get<{ t: number; d: PaperData } | null>(PAPER_KEY, null); if (saved) { p.data = saved.d; p.at = saved.t; p.stale = true; } }
+    renderPaper(s, actions);
+    const get = async (f: string) => {
+      const r = await fetch(`./paper/${f}`, { cache: "no-store" });
+      // Not there yet (before the first run). Some servers answer a missing file with the app's own page.
+      if (r.status === 404 || (r.ok && /html/.test(r.headers.get("content-type") ?? ""))) return null;
+      if (!r.ok) throw new Error(`error ${r.status}`);
+      return r.json();
+    };
+    try {
+      const [config, state, trades] = await Promise.all([get("config.json"), get("state.json"), get("trades.json")]);
+      if (!config) throw new Error("no files");
+      p.data = { config, state: state ?? emptyState(), trades: trades ?? [] };
+      p.at = Date.now(); p.stale = false;
+      store.set(PAPER_KEY, { t: p.at, d: p.data });
+      setStatus("Updated " + stamp(p.at));
+    } catch {
+      p.err = `Couldn't load the paper trading results${navigator.onLine === false ? " (you're offline)" : ""}.${p.data ? " Showing the copy saved " + stamp(p.at!) + "." : ""}`;
+    }
+    p.loading = false;
+    renderPaper(s, actions);
+  }
+
   const saveWatch = () => store.set(K.watch, s.watch);
 
   const actions: Actions = {
@@ -199,9 +234,14 @@ export function startApp() {
       s.view = v;
       $("view-analyze").hidden = v !== "analyze";
       $("view-discover").hidden = v !== "discover";
+      $("view-paper").hidden = v !== "paper";
       $("v-analyze").setAttribute("aria-pressed", String(v === "analyze"));
       $("v-discover").setAttribute("aria-pressed", String(v === "discover"));
+      $("v-paper").setAttribute("aria-pressed", String(v === "paper"));
+      // The address remembers the view, so .../#paper opens straight on paper trading.
+      try { history.replaceState(null, "", v === "analyze" ? location.pathname + location.search : "#" + v); } catch { /* ignore */ }
       if (v === "discover") { if (!s.disc.data && !s.disc.loading) void loadDiscover(); else renderDiscover(s, actions); }
+      else if (v === "paper") { if (!s.paper.at || s.paper.stale || Date.now() - s.paper.at > 5 * 60e3) void loadPaper(); else renderPaper(s, actions); }
       else renderAll();
     },
     toggleOverlay(k) { s.taShow[k] = !s.taShow[k]; store.set(K.ta, s.taShow); renderDesk(s, actions); },
@@ -215,6 +255,7 @@ export function startApp() {
     },
     analyzeFromDiscover(id) { actions.addToWatch(id); actions.setView("analyze"); actions.selectCoin(id); },
     retryCoin(id) { delete s.coinErr[id]; s.lastErr = null; renderDesk(s, actions); void ensureCoin(id); },
+    setPaper(patch) { Object.assign(s.paper, patch); renderPaper(s, actions); },
   };
 
   // ----- Search -----
@@ -249,7 +290,8 @@ export function startApp() {
   // ----- Views, refresh, settings -----
   $("v-analyze").onclick = () => actions.setView("analyze");
   $("v-discover").onclick = () => actions.setView("discover");
-  $("refresh").onclick = () => { if (s.view === "discover") void loadDiscover(true); else void loadAll(true); };
+  $("v-paper").onclick = () => actions.setView("paper");
+  $("refresh").onclick = () => { if (s.view === "discover") void loadDiscover(true); else if (s.view === "paper") void loadPaper(); else void loadAll(true); };
 
   const sb = $("settings-btn"), sp = $("settings"), kIn = $<HTMLInputElement>("key"), kMsg = $("key-msg");
   const keyMsg = (t: string, ok: boolean | null) => { kMsg.textContent = t; kMsg.className = "key-msg" + (ok === true ? " ok" : ok === false ? " bad" : ""); };
@@ -291,4 +333,6 @@ export function startApp() {
   computeAll();
   renderAll();
   void loadAll(false);
+  const startView = location.hash.slice(1) as View;
+  if (startView === "paper" || startView === "discover") actions.setView(startView);
 }

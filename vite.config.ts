@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: "Crypto Risk Lab",
         short_name: "Risk Lab",
-        description: "Watchlist, risk and trend scores, indicators, 30-day ranges, backtests and a top-250 screener (CoinGecko data, EUR).",
+        description: "Watchlist, risk and trend scores, indicators, 30-day ranges, backtests, a top-250 screener and paper trading (CoinGecko data, EUR).",
         lang: "en",
         start_url: "./",
         scope: "./",

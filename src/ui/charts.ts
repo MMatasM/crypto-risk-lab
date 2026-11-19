@@ -128,16 +128,20 @@ export function subChart(kind: "rsi" | "macd", h: History, t: Technicals, a: Ana
     <text x="${W - pr + 4}" y="${pt + 10}" font-size="10.5" fill="var(--muted)">MACD</text></svg>`;
 }
 
-export function equityChart(series: { eq: number[]; color: string; w?: number }[], dates: readonly string[]): string {
-  const W = 760, H = 240, pl = 52, pr = 12, pt = 10, pb = 24, n = series[0].eq.length;
+/**
+ * Value over time of several strategies. `dates` covers the whole chart; a series that starts later
+ * gives `from`, its first index in `dates`. `base` is the starting money (the dashed line).
+ */
+export function equityChart(series: { eq: number[]; color: string; w?: number; from?: number; dash?: string; op?: number }[], dates: readonly string[], base = 1000): string {
+  const W = 760, H = 240, pl = 52, pr = 12, pt = 10, pb = 24, n = dates.length;
   const all = series.flatMap(s => s.eq);
-  let lo = Math.min(...all, 1000), hi = Math.max(...all, 1000);
-  const pad = (hi - lo) * 0.08 || 50;
+  let lo = Math.min(...all, base), hi = Math.max(...all, base);
+  const pad = (hi - lo) * 0.08 || base * 0.05;
   lo -= pad; hi += pad;
   const xs = (i: number) => pl + i / Math.max(1, n - 1) * (W - pl - pr), ys = (v: number) => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Value of €1,000 under each strategy">
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Value of €${base.toLocaleString("en-IE")} under each strategy">
     ${yAxis([0, 1, 2, 3].map(k => lo + (hi - lo) * k / 3), ys, pl, W, pr, v => "€" + Math.round(v))}
-    <line x1="${pl}" x2="${W - pr}" y1="${ys(1000)}" y2="${ys(1000)}" stroke="var(--muted)" stroke-dasharray="4 4"/>
+    <line x1="${pl}" x2="${W - pr}" y1="${ys(base)}" y2="${ys(base)}" stroke="var(--muted)" stroke-dasharray="4 4"/>
     <text x="${pl}" y="${H - 7}" font-size="10.5" fill="var(--muted)">${dates[0]}</text><text x="${W - pr}" y="${H - 7}" text-anchor="end" font-size="10.5" fill="var(--muted)">${dates[dates.length - 1]}</text>
-    ${series.map(s => `<path d="${s.eq.map((v, i) => (i ? "L" : "M") + xs(i).toFixed(1) + " " + ys(v).toFixed(1)).join("")}" fill="none" stroke="${s.color}" stroke-width="${s.w || 1.8}"/>`).join("")}</svg>`;
+    ${series.map(s => `<path d="${s.eq.map((v, i) => (i ? "L" : "M") + xs(i + (s.from ?? 0)).toFixed(1) + " " + ys(v).toFixed(1)).join("")}" fill="none" stroke="${s.color}" stroke-width="${s.w || 1.8}"${s.dash ? ` stroke-dasharray="${s.dash}"` : ""}${s.op != null ? ` opacity="${s.op}"` : ""} stroke-linejoin="round"/>`).join("")}</svg>`;
 }
