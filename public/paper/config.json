@@ -1,0 +1,14 @@
+{
+  "coins": ["bitcoin", "ethereum", "ripple", "solana", "monero"],
+  "strategies": ["hold", "dca", "sma", "cross", "macd", "rsi"],
+  "fee": 0.0025,
+  "slippage": 0.001,
+  "settings": {
+    "smaLength": 50,
+    "fast": 20,
+    "slow": 50,
+    "rsiBuyBelow": 30,
+    "rsiSellAbove": 70,
+    "dcaWeeks": 52
+  }
+}

@@ -2,19 +2,22 @@
   "name": "crypto-risk-lab",
   "private": true,
   "version": "1.0.0",
-  "description": "Crypto watchlist, risk and trend scores, technical indicators, ranges, backtests and a top-250 screener, using the free CoinGecko API in EUR.",
+  "description": "Crypto watchlist, risk and trend scores, technical indicators, ranges, backtests, a top-250 screener and daily paper trading, using the free CoinGecko API in EUR.",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && tsc --noEmit -p scripts && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
-    "icons": "pwa-assets-generator"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p scripts",
+    "icons": "pwa-assets-generator",
+    "paper": "tsx scripts/paper-trade.ts"
   },
   "devDependencies": {
+    "@types/node": "^24.19.2",
     "@vite-pwa/assets-generator": "^2.0.0",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
     "vite-plugin-pwa": "^2.0.0",
