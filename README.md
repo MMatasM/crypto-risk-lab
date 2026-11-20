@@ -41,7 +41,9 @@ stored as a GitHub secret (see below).
 **Signals** (the third view; the site's address with `#signals` at the end) shows last night's scan: the
 model's verdict first, then what changed since the scan before, then the ranked list with filters for size
 tier, sector and risk, and each coin's 7- and 30-day chance of a rise with the range it moves in.
-"How the model was tested, and its live record" opens the full tables.
+"How the model was tested, and its live record" opens the full tables. Below it, the **long-term test** gives
+the verdict over seven years of Bitvavo prices, and "Long-term test: every year and every strategy" opens the
+year-by-year tables, where the model fails, and the strategies after costs (see "Long-term test" below).
 
 **Track** (the ☆ in Signals, or the Track button on a coin's page) is saved in this browser: the coin joins
 your watchlist and is highlighted in Signals. The nightly job can't see your browser, so for a coin outside
@@ -377,12 +379,15 @@ click the pencil next to `COINGECKO_DEMO_KEY` and paste the new key.
 | `src/analysis/` | Pure maths, no screen code: `indicators.ts` (SMA, EMA, RSI, MACD, Bollinger, OBV, drawdown), `scoring.ts` (risk/trend scores and rules), `technicals.ts`, `screen.ts` (Discover), `backtest.ts` (the strategy rules and the trading, shared with paper trading) |
 | `src/scan/` | The nightly market scan, pure functions: `scan.ts` (which coins, scores, ranking, what changed), `history.ts` (the price files), `types.ts` (the file formats) |
 | `src/model/` | The forecasting model, pure functions: `features.ts` (inputs and targets), `linear.ts` (logistic and ridge regression), `gbt.ts` (boosted trees), `walkforward.ts` (training, forecasting, the walk-forward test), `metrics.ts` and `report.ts` (scoring against baselines), `track.ts` (the forecast log and live record) |
+| `src/research/` | The long-term test, pure functions: `bitvavo.ts` (candles, matching scan coins to markets), `universe.ts` (which coins, suspended markets), `phases.ts` (scores per market phase, bootstrap by week), `strategies.ts` (the paper trader run on past years), `types.ts` (the report file) |
 | `src/alerts/` | `summary.ts`: what goes into the nightly Telegram message |
 | `src/paper/` | Paper trading, pure functions: `trader.ts` (trades each new day, checks fetched prices), `portfolio.ts` (the weekly top-k portfolio and its benchmarks), `summary.ts` (leaderboards, curves), `types.ts` (the file formats) |
-| `src/ui/` | Screens: watchlist, desk and its tabs (including `tabs/forecastTab.ts`), Discover, Signals (`signals.ts`), Paper trading (`paper.ts`), charts, formatting |
+| `src/ui/` | Screens: watchlist, desk and its tabs (including `tabs/forecastTab.ts`), Discover, Signals (`signals.ts`, with the long-term test in `longtest.ts`), Paper trading (`paper.ts`), charts, formatting |
 | `src/app.ts` | Connects data, analysis and screens |
 | `scripts/scan.ts` | The nightly market scan: fetches the newest days, runs `src/scan/scan.ts`, saves `data/history/` and `public/data/scan/` |
 | `scripts/forecast.ts` | The nightly forecast: retrains, re-tests, forecasts, logs, scores; saves `public/data/model/` and `data/model/log/` |
+| `scripts/bitvavo-history.ts` | Research: downloads Bitvavo's public daily candles into `data/bitvavo/` (not part of the nightly run) |
+| `scripts/longtest.ts` | Research: the long-term test; saves `public/data/longtest/report.json` (not part of the nightly run) |
 | `scripts/notify.ts` | Sends the nightly Telegram summary, once per night |
 | `scripts/paper-trade.ts` | The nightly paper trader: fetches prices, runs `src/paper/trader.ts`, saves `public/paper/` |
 | `tests/` | Vitest unit tests |

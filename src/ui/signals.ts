@@ -7,6 +7,7 @@ import { BASELINE_NAMES, MODEL_NAMES, verdictText, type HorizonReport, type Mode
 import type { CoinForecast, HorizonForecast } from "../model/types";
 import { SECTORS, type Change, type ScanCoin } from "../scan/types";
 import { cls, esc, eur, pc, pcu, pill, stamp } from "./format";
+import { longDetails, longVerdict } from "./longtest";
 import type { Actions, AppState, SigSort, SignalsData } from "./state";
 
 const TIERS: [string, string][] = [["all", "All sizes"], ["mega", "Mega (€50B+)"], ["large", "Large (€10–50B)"], ["mid", "Mid (€1–10B)"], ["small", "Small (€100M–1B)"], ["micro", "Micro (<€100M)"]];
@@ -93,7 +94,7 @@ export function modelDetails(d: SignalsData): string {
       ${scoreTable(v.horizons["7"], primary)}${calibrationTable(v.horizons["7"], primary)}
       ${scoreTable(v.horizons["30"], primary)}${calibrationTable(v.horizons["30"], primary)}</div>
     <div class="section"><h3>Why to stay sceptical</h3>
-      <ul class="note"><li>One year of history is one market phase. Coins move together, so thousands of rows amount to a few dozen independent weeks; the "95% range" above counts them that way.</li>
+      <ul class="note"><li>One year of history is one market phase${d.longtest ? " (the long-term test below repeats this on seven years of Bitvavo prices)" : ""}. Coins move together, so thousands of rows amount to a few dozen independent weeks; the "95% range" above counts them that way.</li>
       <li>The test uses today's top coins. Coins that collapsed and left the list are missing, which flatters every number here, baselines included. The live record doesn't have this problem.</li>
       <li>Accuracy near 50% with a Brier score near 0.25 means no better than a coin flip, however confident a single number looks.</li>
       <li>Inputs are prices and volumes only. The model knows nothing about news, listings, hacks or regulation.</li></ul></div></details>`;
@@ -162,7 +163,7 @@ export function renderSignals(st: AppState, act: Actions) {
     ${!rows.length ? `<tr><td colspan="13" class="muted">No coins match these filters.</td></tr>` : ""}</table></div>`;
 
   el.innerHTML = head(`The nightly scan: ${scan.coins.length} coins from the closes of ${day(scan.date)}, ranked by composite score (60% trend, 40% low risk), each with the model's forecast. Updated every night by a job on GitHub.`) + err
-    + modelVerdict(d) + modelDetails(d) + changesHtml
+    + modelVerdict(d) + modelDetails(d) + longVerdict(d.longtest, d.model?.primary ?? "logit") + longDetails(d.longtest, d.model?.primary ?? "logit") + changesHtml
     + `<div class="section"><div class="disc-head" style="margin-bottom:6px"><h3>The ranked list</h3>
       <div class="controls" style="margin:0"><label for="s-sort">Sort by<select id="s-sort">${SORTS.map(([k, t]) => `<option value="${k}" ${sv.sort === k ? "selected" : ""}>${t}</option>`).join("")}</select></label>
       <label for="s-tracked" style="flex-direction:row;align-items:center;gap:6px;padding-bottom:8px"><input id="s-tracked" type="checkbox" ${sv.trackedOnly ? "checked" : ""}>Tracked only (${st.tracked.length})</label></div></div>
@@ -173,8 +174,10 @@ export function renderSignals(st: AppState, act: Actions) {
       ${table}${notScanned}</div>
     <p class="note" style="margin-top:12px">★ tracks a coin on this device: it joins your watchlist and is highlighted here. The grey numbers after a chance are the range it moves in when the model is refitted on resampled history (10th to 90th percentile); the range after the 7-day estimate held the outcome 80% of the time in training.${scan.skipped.length ? ` Not scanned tonight: ${scan.skipped.slice(0, 6).map(s => esc(s.name)).join(", ")}${scan.skipped.length > 6 ? ` and ${scan.skipped.length - 6} more` : ""}.` : ""} Nothing here is advice.${sv.at && !sv.stale ? ` Loaded ${stamp(sv.at)}.` : ""}</p>`;
 
-  const more = el.querySelector<HTMLDetailsElement>("details.more");
+  const more = el.querySelector<HTMLDetailsElement>("details.more:not(#long)");
   if (more) { more.open = sv.details; more.ontoggle = () => act.setSignals({ details: more.open }, true); }
+  const long = el.querySelector<HTMLDetailsElement>("#long");
+  if (long) { long.open = sv.longDetails; long.ontoggle = () => act.setSignals({ longDetails: long.open }, true); }
   el.querySelectorAll<HTMLButtonElement>("[data-tier]").forEach(b => (b.onclick = () => act.setSignals({ tier: b.dataset.tier! })));
   el.querySelectorAll<HTMLButtonElement>("[data-sec]").forEach(b => (b.onclick = () => act.setSignals({ sector: b.dataset.sec! })));
   el.querySelectorAll<HTMLButtonElement>("[data-risk]").forEach(b => (b.onclick = () => act.setSignals({ risk: b.dataset.risk as "all" | "low" | "mid" | "high" })));

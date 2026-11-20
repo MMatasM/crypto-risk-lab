@@ -145,3 +145,23 @@ export function equityChart(series: { eq: number[]; color: string; w?: number; f
     <text x="${pl}" y="${H - 7}" font-size="10.5" fill="var(--muted)">${dates[0]}</text><text x="${W - pr}" y="${H - 7}" text-anchor="end" font-size="10.5" fill="var(--muted)">${dates[dates.length - 1]}</text>
     ${series.map(s => `<path d="${s.eq.map((v, i) => (i ? "L" : "M") + xs(i + (s.from ?? 0)).toFixed(1) + " " + ys(v).toFixed(1)).join("")}" fill="none" stroke="${s.color}" stroke-width="${s.w || 1.8}"${s.dash ? ` stroke-dasharray="${s.dash}"` : ""}${s.op != null ? ` opacity="${s.op}"` : ""} stroke-linejoin="round"/>`).join("")}</svg>`;
 }
+
+/**
+ * Growth of the starting money over years, on a logarithmic scale (equal distances are equal percentage
+ * moves, so a 90% fall and a tenfold rise are the same size). `eq` values are multiples of the start (1 = the start).
+ */
+export function growthChart(series: { eq: number[]; color: string; w?: number; dash?: string }[], dates: readonly string[]): string {
+  const W = 760, H = 300, pl = 52, pr = 12, pt = 10, pb = 24, n = dates.length;
+  const all = series.flatMap(s => s.eq).filter(v => v > 0);
+  const lo = Math.log10(Math.min(...all, 1)) - 0.05, hi = Math.log10(Math.max(...all, 1)) + 0.05;
+  const xs = (i: number) => pl + i / Math.max(1, n - 1) * (W - pl - pr), ys = (v: number) => pt + (1 - (Math.log10(v) - lo) / (hi - lo)) * (H - pt - pb);
+  const ticks: number[] = [];
+  for (let e = Math.floor(lo); e <= Math.ceil(hi); e++) for (const k of hi - lo > 2.5 ? [1] : [1, 2, 5]) { const v = k * 10 ** e; if (Math.log10(v) >= lo && Math.log10(v) <= hi) ticks.push(v); }
+  const label = (v: number) => "×" + (v >= 1 ? String(Math.round(v)) : String(Number(v.toPrecision(1))));
+  const years = dates.map((d, i) => (i > 0 && d.slice(0, 4) !== dates[i - 1].slice(0, 4) ? i : -1)).filter(i => i >= 0);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Growth of the starting money under each strategy, logarithmic scale">
+    ${yAxis(ticks, ys, pl, W, pr, label)}
+    ${years.map(i => `<line x1="${xs(i).toFixed(1)}" x2="${xs(i).toFixed(1)}" y1="${pt}" y2="${H - pb}" stroke="var(--line)"/><text x="${xs(i).toFixed(1)}" y="${H - 7}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${dates[i].slice(0, 4)}</text>`).join("")}
+    <line x1="${pl}" x2="${W - pr}" y1="${ys(1)}" y2="${ys(1)}" stroke="var(--muted)" stroke-dasharray="4 4"/>
+    ${series.map(s => `<path d="${s.eq.map((v, i) => (i ? "L" : "M") + xs(i).toFixed(1) + " " + ys(Math.max(v, 1e-6)).toFixed(1)).join("")}" fill="none" stroke="${s.color}" stroke-width="${s.w || 1.6}"${s.dash ? ` stroke-dasharray="${s.dash}"` : ""} stroke-linejoin="round"/>`).join("")}</svg>`;
+}

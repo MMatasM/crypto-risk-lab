@@ -6,6 +6,7 @@ import type { Overlays } from "./charts";
 import type { ForecastFile, TrackFile, ValidationFile } from "../model/types";
 import type { PortfolioState, PortfolioTrade } from "../paper/portfolio";
 import type { PaperConfig, PaperState, PaperStrategy, TradeRecord } from "../paper/types";
+import type { LongTestFile } from "../research/types";
 import type { ScanConfig, ScanFile } from "../scan/types";
 
 export type Tab = "overview" | "technicals" | "ranges" | "history" | "signals" | "forecast" | "backtest";
@@ -29,7 +30,7 @@ export interface DiscoverState {
 export interface PaperData { config: PaperConfig; state: PaperState; trades: TradeRecord[]; portfolio?: PortfolioState | null; portfolioTrades?: PortfolioTrade[] }
 
 /** The nightly scan and forecast files, as published with the site (public/data/). */
-export interface SignalsData { scan: ScanFile | null; model: ForecastFile | null; validation: ValidationFile | null; track: TrackFile | null; config: ScanConfig | null }
+export interface SignalsData { scan: ScanFile | null; model: ForecastFile | null; validation: ValidationFile | null; track: TrackFile | null; config: ScanConfig | null; /** The long-term test on Bitvavo history (public/data/longtest/report.json); absent in copies saved before it existed. */ longtest?: LongTestFile | null }
 
 export interface SignalsViewState {
   data: SignalsData | null;
@@ -46,6 +47,8 @@ export interface SignalsViewState {
   allChanges: boolean;
   /** Whether the "how the model was tested" block is open. */
   details: boolean;
+  /** Whether the long-term test's tables are open. */
+  longDetails: boolean;
 }
 
 export interface PaperViewState {
@@ -101,7 +104,7 @@ export interface Actions {
   retryCoin(id: string): void;
   setPaper(patch: Partial<Pick<PaperViewState, "coin" | "focus" | "logStrategy" | "logAll">>): void;
   /** `quiet` remembers the change without redrawing (for things the browser has already drawn, like an opened block). */
-  setSignals(patch: Partial<Pick<SignalsViewState, "tier" | "sector" | "risk" | "sort" | "trackedOnly" | "allChanges" | "details">>, quiet?: boolean): void;
+  setSignals(patch: Partial<Pick<SignalsViewState, "tier" | "sector" | "risk" | "sort" | "trackedOnly" | "allChanges" | "details" | "longDetails">>, quiet?: boolean): void;
   toggleTrack(id: string): void;
   /** Opens a coin's page (adding it to the watchlist if needed), optionally on a given tab. */
   openCoin(id: string, tab?: Tab): void;

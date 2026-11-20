@@ -69,7 +69,7 @@ export function startApp() {
     tracked,
     signals: {
       data: null, at: null, stale: false, err: null, loading: false,
-      tier: sigPrefs.tier ?? "all", sector: sigPrefs.sector ?? "", risk: sigPrefs.risk ?? "all", sort: sigPrefs.sort ?? "rank", trackedOnly: false, allChanges: false, details: false,
+      tier: sigPrefs.tier ?? "all", sector: sigPrefs.sector ?? "", risk: sigPrefs.risk ?? "all", sort: sigPrefs.sort ?? "rank", trackedOnly: false, allChanges: false, details: false, longDetails: false,
     },
   };
   if (!s.watch.includes(s.selected)) s.selected = "bitcoin";
@@ -201,9 +201,9 @@ export function startApp() {
     if (!v.data) { const saved = store.get<{ t: number; d: SignalsData } | null>(SIGNALS_KEY, null); if (saved) { v.data = saved.d; v.at = saved.t; v.stale = true; } }
     drawSignals();
     try {
-      const [scan, model, validation, track, config] = await Promise.all(["scan/latest", "model/latest", "model/validation", "model/track", "scan/config"].map(f => getFile(`./data/${f}.json`)));
+      const [scan, model, validation, track, config, longtest] = await Promise.all(["scan/latest", "model/latest", "model/validation", "model/track", "scan/config", "longtest/report"].map(f => getFile(`./data/${f}.json`)));
       if (!scan && !config) throw new Error("no files");
-      v.data = { scan, model, validation, track, config };
+      v.data = { scan, model, validation, track, config, longtest };
       v.at = Date.now(); v.stale = false;
       store.set(SIGNALS_KEY, { t: v.at, d: v.data });
       if (s.view === "signals") setStatus("Updated " + stamp(v.at));
