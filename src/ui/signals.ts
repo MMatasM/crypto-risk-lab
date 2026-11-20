@@ -5,7 +5,7 @@
 import type { Tone } from "../analysis/scoring";
 import { BASELINE_NAMES, MODEL_NAMES, verdictText, type HorizonReport, type ModelKey } from "../model/report";
 import type { CoinForecast, HorizonForecast } from "../model/types";
-import { SECTORS, type ScanCoin } from "../scan/types";
+import { SECTORS, type Change, type ScanCoin } from "../scan/types";
 import { cls, esc, eur, pc, pcu, pill, stamp } from "./format";
 import type { Actions, AppState, SigSort, SignalsData } from "./state";
 
@@ -129,7 +129,13 @@ export function renderSignals(st: AppState, act: Actions) {
   rows.sort(sorters[sv.sort]);
 
   // What changed: tracked coins first (the file marks the nightly watchlist; this device's tracked coins count too).
-  const changes = scan.changes.slice().sort((a, b) => Number(tracked.has(b.id) || b.watch) - Number(tracked.has(a.id) || a.watch));
+  // The forecast crossing 50% since the night before counts as a change too.
+  const flips: Change[] = scan.coins.flatMap(c => {
+    const f = fc.get(c.id)?.h7;
+    if (!f || f.was == null || (f.p > 0.5) === (f.was > 0.5)) return [];
+    return [{ id: c.id, name: c.name, kind: "cons" as const, k: f.p > 0.5 ? "good" as const : "bad" as const, watch: c.watch, text: `Forecast: the 7-day chance of a rise went ${f.p > 0.5 ? "above" : "below"} 50% (${pcu(f.was)} → ${pcu(f.p)})` }];
+  });
+  const changes = [...scan.changes, ...flips].sort((a, b) => Number(tracked.has(b.id) || b.watch) - Number(tracked.has(a.id) || a.watch));
   const shown = sv.allChanges ? changes : changes.slice(0, CHANGES_SHOWN);
   const changesHtml = `<div class="section"><h3>What changed since ${scan.previousDate ? day(scan.previousDate) : "the scan before"}</h3>
     ${!scan.previousDate ? `<p class="note">This is the first scan, so there is nothing to compare it with yet${changes.length ? "; unusual one-day moves are listed" : ""}.</p>` : ""}

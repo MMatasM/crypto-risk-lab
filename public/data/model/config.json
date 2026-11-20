@@ -1,4 +1,4 @@
 {
-  "primary": "logit",
-  "note": "The simpler model, used by default."
+  "primary": "gbt",
+  "note": "Chosen on 20 Nov 2026 by a rule set in advance: the model with the lower Brier score in the 7-day walk-forward test (boosted trees 0.244, logistic regression 0.262). Neither beat the baselines by more than luck would explain, and picking the better of two flatters its test number a little. Both models are logged and scored every night, so the live record shows which one deserves the place."
 }

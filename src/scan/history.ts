@@ -33,11 +33,18 @@ export interface HistoryMerge { history: History; added: number; problem: string
 /**
  * Adds freshly fetched days to the saved history. The same checks as paper trading (`mergeCloses`):
  * only finished days, saved days are never changed, and a fetch that disagrees with the saved closes
- * or jumps implausibly is refused.
+ * or jumps implausibly is refused (for a brand-new coin, only the days before such a jump are dropped).
  */
 export function mergeHistory(saved: History | undefined, fetched: History, today: string): HistoryMerge {
   const base: History = saved ?? { dates: [], closes: [], volumes: [] };
   const m = mergeCloses(saved ? { dates: saved.dates, closes: saved.closes } : undefined, fetched, today);
+  // A coin seen for the first time can have a glitch or a re-denomination somewhere in its past year. Rather
+  // than refusing it every night, keep the days after the last such jump (a saved history stays strict).
+  if (!saved && m.problem?.startsWith("an implausible jump")) {
+    let cut = 0;
+    for (let i = 1; i < fetched.closes.length; i++) { const r = fetched.closes[i] / fetched.closes[i - 1]; if (fetched.dates[i] < today && (r > 5 || r < 0.2)) cut = i; }
+    if (cut > 0) return mergeHistory(undefined, { dates: fetched.dates.slice(cut), closes: fetched.closes.slice(cut), volumes: fetched.volumes.slice(cut) }, today);
+  }
   if (m.problem || !m.added) return { history: base, added: 0, problem: m.problem };
   const vol = new Map(fetched.dates.map((d, i) => [d, fetched.volumes[i] ?? 0] as const));
   const volumes = [...base.volumes];

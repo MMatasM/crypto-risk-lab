@@ -1,0 +1,262 @@
+{
+  "generatedAt": "2026-11-20T11:09:13.418Z",
+  "since": "2026-11-19",
+  "latest": "2026-11-19",
+  "nights": 1,
+  "horizons": {
+    "7": {
+      "horizon": 7,
+      "n": 0,
+      "coins": 0,
+      "from": null,
+      "to": null,
+      "days": 0,
+      "upShare": 0,
+      "logit": {
+        "n": 0,
+        "accuracy": 0,
+        "brier": 0,
+        "logLoss": 0,
+        "auc": 0.5
+      },
+      "gbt": {
+        "n": 0,
+        "accuracy": 0,
+        "brier": 0,
+        "logLoss": 0,
+        "auc": 0.5
+      },
+      "base": {
+        "n": 0,
+        "accuracy": 0,
+        "brier": 0,
+        "logLoss": 0,
+        "auc": 0.5
+      },
+      "momentum": {
+        "n": 0,
+        "accuracy": 0,
+        "brier": 0,
+        "logLoss": 0,
+        "auc": 0.5
+      },
+      "alwaysUpAccuracy": 0,
+      "momentumRuleAccuracy": 0,
+      "calibration": {
+        "logit": [],
+        "gbt": []
+      },
+      "calibrationError": {
+        "logit": 0,
+        "gbt": 0
+      },
+      "versus": {
+        "logit": {
+          "base": {
+            "mean": 0,
+            "lo": null,
+            "hi": null,
+            "blocks": 0,
+            "verdict": "unknown"
+          },
+          "momentum": {
+            "mean": 0,
+            "lo": null,
+            "hi": null,
+            "blocks": 0,
+            "verdict": "unknown"
+          },
+          "flip": {
+            "mean": 0,
+            "lo": null,
+            "hi": null,
+            "blocks": 0,
+            "verdict": "unknown"
+          }
+        },
+        "gbt": {
+          "base": {
+            "mean": 0,
+            "lo": null,
+            "hi": null,
+            "blocks": 0,
+            "verdict": "unknown"
+          },
+          "momentum": {
+            "mean": 0,
+            "lo": null,
+            "hi": null,
+            "blocks": 0,
+            "verdict": "unknown"
+          },
+          "flip": {
+            "mean": 0,
+            "lo": null,
+            "hi": null,
+            "blocks": 0,
+            "verdict": "unknown"
+          }
+        }
+      },
+      "bestBaseline": "base",
+      "verdict": {
+        "logit": "unknown",
+        "gbt": "unknown"
+      },
+      "rankSkill": {
+        "logit": {
+          "mean": 0,
+          "lo": null,
+          "hi": null,
+          "blocks": 0
+        },
+        "gbt": {
+          "mean": 0,
+          "lo": null,
+          "hi": null,
+          "blocks": 0
+        }
+      },
+      "ret": {
+        "r2": 0,
+        "coverage": 0,
+        "rankSkill": {
+          "mean": 0,
+          "lo": null,
+          "hi": null,
+          "blocks": 0
+        }
+      },
+      "byCoin": {},
+      "pending": 149,
+      "firstResolves": "2026-11-26"
+    },
+    "30": {
+      "horizon": 30,
+      "n": 0,
+      "coins": 0,
+      "from": null,
+      "to": null,
+      "days": 0,
+      "upShare": 0,
+      "logit": {
+        "n": 0,
+        "accuracy": 0,
+        "brier": 0,
+        "logLoss": 0,
+        "auc": 0.5
+      },
+      "gbt": {
+        "n": 0,
+        "accuracy": 0,
+        "brier": 0,
+        "logLoss": 0,
+        "auc": 0.5
+      },
+      "base": {
+        "n": 0,
+        "accuracy": 0,
+        "brier": 0,
+        "logLoss": 0,
+        "auc": 0.5
+      },
+      "momentum": {
+        "n": 0,
+        "accuracy": 0,
+        "brier": 0,
+        "logLoss": 0,
+        "auc": 0.5
+      },
+      "alwaysUpAccuracy": 0,
+      "momentumRuleAccuracy": 0,
+      "calibration": {
+        "logit": [],
+        "gbt": []
+      },
+      "calibrationError": {
+        "logit": 0,
+        "gbt": 0
+      },
+      "versus": {
+        "logit": {
+          "base": {
+            "mean": 0,
+            "lo": null,
+            "hi": null,
+            "blocks": 0,
+            "verdict": "unknown"
+          },
+          "momentum": {
+            "mean": 0,
+            "lo": null,
+            "hi": null,
+            "blocks": 0,
+            "verdict": "unknown"
+          },
+          "flip": {
+            "mean": 0,
+            "lo": null,
+            "hi": null,
+            "blocks": 0,
+            "verdict": "unknown"
+          }
+        },
+        "gbt": {
+          "base": {
+            "mean": 0,
+            "lo": null,
+            "hi": null,
+            "blocks": 0,
+            "verdict": "unknown"
+          },
+          "momentum": {
+            "mean": 0,
+            "lo": null,
+            "hi": null,
+            "blocks": 0,
+            "verdict": "unknown"
+          },
+          "flip": {
+            "mean": 0,
+            "lo": null,
+            "hi": null,
+            "blocks": 0,
+            "verdict": "unknown"
+          }
+        }
+      },
+      "bestBaseline": "base",
+      "verdict": {
+        "logit": "unknown",
+        "gbt": "unknown"
+      },
+      "rankSkill": {
+        "logit": {
+          "mean": 0,
+          "lo": null,
+          "hi": null,
+          "blocks": 0
+        },
+        "gbt": {
+          "mean": 0,
+          "lo": null,
+          "hi": null,
+          "blocks": 0
+        }
+      },
+      "ret": {
+        "r2": 0,
+        "coverage": 0,
+        "rankSkill": {
+          "mean": 0,
+          "lo": null,
+          "hi": null,
+          "blocks": 0
+        }
+      },
+      "byCoin": {},
+      "pending": 149,
+      "firstResolves": "2026-12-19"
+    }
+  }
+}

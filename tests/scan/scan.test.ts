@@ -35,6 +35,13 @@ describe("history files", () => {
     expect(m.problem).toMatch(/don't match/);
     expect(m.history).toEqual(saved);
   });
+  it("keeps a new coin whose early history has a glitch, from the day of the last jump on", () => {
+    const fetched: History = { dates: ["2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05"], closes: [1, 1.1, 40, 41, 42], volumes: [1, 2, 3, 4, 5] };
+    expect(mergeHistory(undefined, fetched, "2026-01-06")).toEqual({ history: { dates: ["2026-01-03", "2026-01-04", "2026-01-05"], closes: [40, 41, 42], volumes: [3, 4, 5] }, added: 3, problem: null });
+    // A coin that already has a saved history stays strict: the fetch is refused.
+    const saved: History = { dates: ["2026-01-01", "2026-01-02"], closes: [1, 1.1], volumes: [1, 2] };
+    expect(mergeHistory(saved, fetched, "2026-01-06").problem).toMatch(/implausible jump/);
+  });
   it("asks for a year the first time and only the newest days afterwards", () => {
     expect(daysToFetch(undefined, "2026-11-20")).toBe(365);
     expect(daysToFetch(hist(3, 1, "2026-11-17"), "2026-11-20")).toBe(10);
