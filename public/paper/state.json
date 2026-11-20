@@ -1,10 +1,10 @@
 {
   "version": 1,
   "startDate": "2026-11-18",
-  "lastDate": "2026-11-18",
+  "lastDate": "2026-11-19",
   "coins": {
     "bitcoin": {
-      "dates": ["2026-11-18"],
+      "dates": ["2026-11-18","2026-11-19"],
       "pairs": {
         "hold": {
           "strategy": "hold",
@@ -23,7 +23,7 @@
           "units": 0.017355795129496112,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034965]
+          "equity": [996.5034965034965,979.8827743669464]
         },
         "dca": {
           "strategy": "dca",
@@ -42,7 +42,7 @@
           "units": 0.0003337652909518483,
           "held": false,
           "trades": 1,
-          "equity": [999.9327595481441]
+          "equity": [999.9327595481441,999.6131302762874]
         },
         "sma": {
           "strategy": "sma",
@@ -61,7 +61,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "cross": {
           "strategy": "cross",
@@ -80,7 +80,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "macd": {
           "strategy": "macd",
@@ -99,7 +99,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "rsi": {
           "strategy": "rsi",
@@ -118,12 +118,12 @@
           "units": 0.017355795129496112,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034965]
+          "equity": [996.5034965034965,979.8827743669464]
         }
       }
     },
     "ethereum": {
-      "dates": ["2026-11-18"],
+      "dates": ["2026-11-18","2026-11-19"],
       "pairs": {
         "hold": {
           "strategy": "hold",
@@ -142,7 +142,7 @@
           "units": 0.6159412679885484,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034965]
+          "equity": [996.5034965034965,985.9422213041191]
         },
         "dca": {
           "strategy": "dca",
@@ -161,7 +161,7 @@
           "units": 0.011845024384395162,
           "held": false,
           "trades": 1,
-          "equity": [999.9327595481441]
+          "equity": [999.9327595481441,999.7296581020022]
         },
         "sma": {
           "strategy": "sma",
@@ -180,7 +180,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "cross": {
           "strategy": "cross",
@@ -199,7 +199,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "macd": {
           "strategy": "macd",
@@ -218,7 +218,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "rsi": {
           "strategy": "rsi",
@@ -237,12 +237,12 @@
           "units": 0.6159412679885484,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034965]
+          "equity": [996.5034965034965,985.9422213041191]
         }
       }
     },
     "ripple": {
-      "dates": ["2026-11-18"],
+      "dates": ["2026-11-18","2026-11-19"],
       "pairs": {
         "hold": {
           "strategy": "hold",
@@ -261,7 +261,7 @@
           "units": 1130.8865535195287,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034966]
+          "equity": [996.5034965034966,989.3188057895167]
         },
         "dca": {
           "strategy": "dca",
@@ -280,7 +280,7 @@
           "units": 21.74781833691401,
           "held": false,
           "trades": 1,
-          "equity": [999.9327595481441]
+          "equity": [999.9327595481441,999.7945924190291]
         },
         "sma": {
           "strategy": "sma",
@@ -299,7 +299,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "cross": {
           "strategy": "cross",
@@ -318,7 +318,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "macd": {
           "strategy": "macd",
@@ -337,7 +337,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "rsi": {
           "strategy": "rsi",
@@ -356,12 +356,12 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         }
       }
     },
     "solana": {
-      "dates": ["2026-11-18"],
+      "dates": ["2026-11-18","2026-11-19"],
       "pairs": {
         "hold": {
           "strategy": "hold",
@@ -380,7 +380,7 @@
           "units": 14.864042813731313,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034965]
+          "equity": [996.5034965034965,990.2745336388998]
         },
         "dca": {
           "strategy": "dca",
@@ -399,7 +399,7 @@
           "units": 0.28584697718714064,
           "held": false,
           "trades": 1,
-          "equity": [999.9327595481441]
+          "equity": [999.9327595481441,999.8129718007481]
         },
         "sma": {
           "strategy": "sma",
@@ -418,7 +418,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "cross": {
           "strategy": "cross",
@@ -437,7 +437,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "macd": {
           "strategy": "macd",
@@ -456,7 +456,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "rsi": {
           "strategy": "rsi",
@@ -471,16 +471,16 @@
             "rsiSellAbove": 70,
             "dcaWeeks": 52
           },
-          "cash": 1000,
-          "units": 0,
-          "held": false,
-          "trades": 0,
-          "equity": [1000]
+          "cash": 0,
+          "units": 14.957539685113314,
+          "held": true,
+          "trades": 1,
+          "equity": [1000,996.5034965034965]
         }
       }
     },
     "monero": {
-      "dates": ["2026-11-18"],
+      "dates": ["2026-11-18","2026-11-19"],
       "pairs": {
         "hold": {
           "strategy": "hold",
@@ -499,7 +499,7 @@
           "units": 2.1630039768739504,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034965]
+          "equity": [996.5034965034965,980.8159757664009]
         },
         "dca": {
           "strategy": "dca",
@@ -518,7 +518,7 @@
           "units": 0.041596230324499044,
           "held": false,
           "trades": 1,
-          "equity": [999.9327595481441]
+          "equity": [999.9327595481441,999.6310764570461]
         },
         "sma": {
           "strategy": "sma",
@@ -537,7 +537,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "cross": {
           "strategy": "cross",
@@ -556,7 +556,7 @@
           "units": 2.1630039768739504,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034965]
+          "equity": [996.5034965034965,980.8159757664009]
         },
         "macd": {
           "strategy": "macd",
@@ -575,7 +575,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         },
         "rsi": {
           "strategy": "rsi",
@@ -594,7 +594,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000]
+          "equity": [1000,1000]
         }
       }
     }
