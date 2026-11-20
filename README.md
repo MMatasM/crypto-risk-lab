@@ -1,7 +1,8 @@
 # Crypto Risk Lab
 
 A watchlist with risk and trend scores, technical indicators, 30-day ranges, a backtester, a
-Discover screener of the top 250 coins, and daily **paper trading** (fake money, real prices).
+Discover screener of the top 250 coins, a nightly **scan** of the top 150 with an honestly tested
+**forecasting model**, and daily **paper trading** (fake money, real prices).
 Prices come from the free CoinGecko API, in EUR. It is an installable web app (PWA): add it to a
 phone's home screen and it opens offline with the last saved data.
 
@@ -19,7 +20,9 @@ npm test           # unit tests for the indicator, backtest, paper trading and d
 npm run build      # makes the publishable site in dist/
 npm run preview    # serves dist/ at http://localhost:4173 to try the built app
 npm run scan       # runs the market scan once (normally GitHub does this every night)
+npm run forecast   # retrains and tests the forecasting model on the saved prices (no network needed)
 npm run paper      # runs the paper trader once (normally GitHub does this every night)
+npm run notify     # prints the Telegram summary for the last night (sends it only if the bot is set up)
 ```
 
 The service worker (offline support) only runs in the built app (`build` then `preview`), not in `dev`.
@@ -33,6 +36,21 @@ Dashboard, create a Demo key (starts with `CG-`) and paste it under **Data setti
 stored only in that browser, on that device. The nightly paper trader uses its own copy of the key,
 stored as a GitHub secret (see below).
 
+## Signals, tracking and the Forecast tab
+
+**Signals** (the third view; the site's address with `#signals` at the end) shows last night's scan: the
+model's verdict first, then what changed since the scan before, then the ranked list with filters for size
+tier, sector and risk, and each coin's 7- and 30-day chance of a rise with the range it moves in.
+"How the model was tested, and its live record" opens the full tables.
+
+**Track** (the ☆ in Signals, or the Track button on a coin's page) is saved in this browser: the coin joins
+your watchlist and is highlighted in Signals. The nightly job can't see your browser, so for a coin outside
+the top 150 to be scanned every night (and included in Telegram alerts), also add it to `watchlist` in
+`public/data/scan/config.json`.
+
+**Forecast** (a tab on each coin's page) shows tonight's two chances with their ranges, the return estimate,
+the inputs that moved the forecast most, and how the model has done on that coin so far.
+
 ## The nightly run
 
 Every night at about 00:30 UTC (GitHub sometimes starts it later), `.github/workflows/paper-trading.yml`
@@ -40,7 +58,9 @@ Every night at about 00:30 UTC (GitHub sometimes starts it later), `.github/work
 republishes the site, all without your PC:
 
 1. **Market scan** (`npm run scan`)
-2. **Paper trading** (`npm run paper`)
+2. **Forecast** (`npm run forecast`)
+3. **Paper trading** (`npm run paper`)
+4. **Telegram summary** (`npm run notify`), if you have set it up (see below)
 
 A job that fails doesn't stop the ones after it, and the run is still marked failed (red) so GitHub emails
 you. You can start it by hand any time: GitHub, **Actions** tab, **Nightly run**, **Run workflow**. Running it
@@ -76,6 +96,96 @@ key it takes about 6 minutes. See "Adding the CoinGecko key to GitHub" below.
 **To watch another coin every night**, add its CoinGecko id (the last part of its coingecko.com address,
 such as `monero`) to `watchlist` in `public/data/scan/config.json`, commit and push.
 
+## Forecasting model
+
+An experiment, scored in the open: can anything in a coin's own price history say whether it will be higher
+in 7 or in 30 days? **Read the verdict in the app (Signals view) before reading any forecast.** If the model
+doesn't beat the simple baselines, the app says so in plain words at the top.
+
+**What it predicts**, for every scanned coin, every night: the chance that the price is higher 7 days later
+and 30 days later, plus an estimate of the return with a range around it.
+
+**What it looks at** (16 inputs per coin per day, all from daily closes and volumes): returns over 1, 7, 30 and
+90 days; 30-day volatility; RSI; MACD (against zero and against its signal line); distance from the 20-, 50-
+and 200-day averages (the "200-day" average uses all of a coin's history until it has 200 days); last week's
+trading volume against last month's; the fall from the 1-year high; and Bitcoin's own trend (30-day return,
+distance from its 50- and 200-day averages) as the market's mood. Nothing else: no news, no order books.
+
+**The models.** A regularised logistic regression (the simple one) and gradient-boosted trees (many small
+decision trees, which can pick up "only when" patterns). Both are trained, tested, logged and scored every
+night. Which of the two the app shows and the paper strategies trade on is set in
+`public/data/model/config.json` (`primary`: `logit` or `gbt`), together with a note saying why. A ridge regression gives the return estimate; its range comes from the size of its own past
+errors, scaled by each coin's volatility. Settings were fixed in advance and are not tuned to the results.
+
+**Why TypeScript and not Python.** Training runs in the same language as the rest of the app, so the nightly
+job needs nothing beyond `npm ci`: no second toolchain to install and keep working on GitHub. The inputs are
+computed by the app's own indicator code, so training, the nightly forecast and the charts can never
+disagree about what "RSI" means. The data is small (tens of thousands of rows, 16 columns), so the heavy
+Python libraries would buy nothing; both models are a few hundred lines here and are unit-tested against
+data with known answers (`tests/model/`), including tests that they do *not* find skill in pure noise.
+
+**How it is tested (walk-forward).** For each week in the past: train only on outcomes that were already
+known before that week, leaving a gap of the full 7 or 30 days so that no training outcome overlaps the week
+being forecast; forecast that week; move on a week; repeat. Nothing from the future is ever used, and a test
+checks that changing later prices leaves earlier inputs untouched. The forecasts are then scored on:
+
+- **accuracy** (how often the forecast was on the right side of 50%),
+- **Brier score** (the mean squared gap between the forecast chance and what happened; lower is better, and
+  always saying 50% scores 0.25),
+- **calibration** (when it said 60%, did it happen about 60% of the time?),
+
+against three baselines: **always up** (as a probability: the share of rises seen so far), **simple
+momentum** (the share of rises seen so far after an up month, or after a down month) and a **coin flip**.
+
+**The verdict rule.** Coins move together and forecasts a day apart share most of their outcome, so thousands
+of rows are worth only a few dozen independent observations. The comparison therefore groups the test days
+into blocks two horizons long (14 days for 7-day forecasts, 60 for 30-day), counts each block once, and puts
+a 95% range on the difference. The model "beats the baselines" only if that whole range is on the better
+side of the best baseline. With fewer than 4 blocks the verdict is "too little history to say", which is
+where 30-day forecasts stand until about a year more history has built up.
+
+**Known weaknesses, stated up front.** CoinGecko's free data goes back one year, which is one market phase.
+The test uses today's top coins; coins that collapsed and left the list are missing, which flatters every
+number (the live record doesn't have this problem). And prices alone may simply not contain a usable signal.
+
+**The live record.** Every night the forecasts are written to `data/model/log/<month>/<day>.csv`. A night's
+file is written once and never changed. When the 7 or 30 days have passed, each forecast is scored with the
+same code as the walk-forward test. This record can't have been fitted to the past; it is the one to watch.
+
+| File | What is in it |
+|---|---|
+| `public/data/model/latest.json` | Tonight's forecasts: chance, range, return estimate and the inputs that moved it most, per coin. |
+| `public/data/model/validation.json` | The walk-forward test: both models and the baselines, calibration, the verdicts, per-coin accuracy. |
+| `public/data/model/track.json` | The live record: logged forecasts whose outcome is known, scored the same way. |
+| `data/model/log/` | Every forecast ever made, one file per night. |
+
+## Telegram alerts (optional)
+
+One message a night at most, and only when something happened: a tracked coin (the `watchlist` in
+`public/data/scan/config.json`) changed classification or moved more than twice its usual daily move, the
+model's 7-day chance for a tracked coin crossed the 55% trading threshold, or a paper strategy traded.
+On a quiet night nothing is sent. It costs nothing.
+
+**Set it up once (about five minutes).**
+
+1. In Telegram, search for **@BotFather** (the one with the blue tick), open it and press **Start**.
+2. Send it `/newbot`. It asks for a name (anything, for example `Risk Lab alerts`) and then a username, which
+   must end in `bot` (for example `matas_risklab_bot`).
+3. BotFather replies with a **token**: a long line such as `1234567890:AAH...`. Treat it like a password:
+   anyone who has it can send messages as your bot. Don't paste it into chats or commit it anywhere.
+4. Tap the link to your new bot in BotFather's reply, press **Start**, and send it any message (`hi`).
+   A bot can't write to you until you have written to it.
+5. Find your **chat ID**: in a browser open `https://api.telegram.org/bot<TOKEN>/getUpdates`, with your token
+   in place of `<TOKEN>`. In the text that appears, find `"chat":{"id":123456789`. That number is your chat ID.
+   (If the page shows `"result":[]`, send the bot another message and reload.)
+6. On GitHub open the repository, **Settings**, **Secrets and variables**, **Actions**, **New repository
+   secret**. Add two secrets: name `TELEGRAM_BOT_TOKEN` with the token, and name `TELEGRAM_CHAT_ID` with
+   the number. (Same page as the CoinGecko key.)
+7. Test it: **Actions** tab, **Nightly run**, **Run workflow**, tick **Send a Telegram test message**, **Run
+   workflow**. A test message should arrive within a few minutes.
+
+GitHub hides secrets from everyone, including the logs. To stop the alerts, delete the two secrets.
+
 ## Paper trading
 
 The goal: find out over the coming weeks and months whether any rule beats simply buying and
@@ -94,7 +204,9 @@ solana, monero) gets six strategies, each with its own virtual €1,000:
 | MACD above signal | Holds while MACD (12/26/9) is above its signal line. |
 | RSI 30/70 | Buys when RSI (14) falls below 30, sells when it rises above 70. |
 
-These are the Backtest tab's default settings. The rules and the trading are the **same code** as
+A seventh strategy and a portfolio trade on the forecasting model (see "Model strategies" below).
+
+The six above use the Backtest tab's default settings. The rules and the trading are the **same code** as
 the Backtest tab (`rule` and `tradeDay` in `src/analysis/backtest.ts`), and a test checks that the
 paper trader's daily values equal the backtester's to the last digit on the same prices.
 
@@ -131,6 +243,26 @@ winner; give it many months, and judge the worst drop as well as the return.
 | `prices.json` | The daily closes the trader used. Only ever extended; old closes are never rewritten. |
 | `state.json` | Each strategy-coin pair: cash, coins held, value after every day. |
 | `trades.json` | Every trade: date, coin, strategy, buy/sell, price, amount, fee, slippage, reason. |
+
+**Model strategies.** Both started on their first nightly run with fresh money; the six older strategies and
+their start date were not touched. They use the same fee and slippage and the same timing as everything
+else: the decision for a day comes from the scan and forecast made after the *previous* day's close, and the
+trade happens at that day's close.
+
+- **Model (per coin):** holds the coin while the model's 7-day chance of a rise is above
+  `settings.modelThreshold` (55%), otherwise cash. One per coin, €1,000 each, like the other strategies. Because
+  it started later, its "vs buy and hold" column compares it with buying and holding from its own first day.
+- **Top-k rotation (portfolio):** one pot of €1,000. Every 7 days it ranks the 50 biggest scanned coins by
+  the average of two percentile ranks (the scan's composite score and the model's 7-day chance of a rise),
+  holds the best 5 in equal parts, never more than 40% of the pot in one coin, and goes to cash while
+  Bitcoin's close is below its 50-day average. The numbers are in `config.json` under `portfolio`.
+  It is compared with two portfolios that started the same day with the same €1,000: **buy and hold
+  Bitcoin**, and **equal weight** (an equal amount of each of the 50 biggest coins, bought once and held).
+  Files: `portfolio.json` (the three portfolios day by day) and `portfolio-trades.json`.
+
+If the forecast is missing for a night, the per-coin model strategy keeps its position and a due weekly
+rebalance waits a day. If the model is no better than a coin flip, expect these two to lose to buy and hold
+by roughly their trading costs. Finding that out with fake money is the point.
 
 **Changing the config.** A coin or strategy added to `config.json` starts on the next night.
 A pair keeps the fee and settings it started with, so its record stays comparable; changed fees or
@@ -170,13 +302,17 @@ click the pencil next to `COINGECKO_DEMO_KEY` and paste the new key.
 | `src/data/` | `coingecko.ts` (request queue: per-minute budget, retries, priorities), `repository.ts` (what the app asks for, cached in browser storage, with stale fallback), `storage.ts`, `types.ts` |
 | `src/analysis/` | Pure maths, no screen code: `indicators.ts` (SMA, EMA, RSI, MACD, Bollinger, OBV, drawdown), `scoring.ts` (risk/trend scores and rules), `technicals.ts`, `screen.ts` (Discover), `backtest.ts` (the strategy rules and the trading, shared with paper trading) |
 | `src/scan/` | The nightly market scan, pure functions: `scan.ts` (which coins, scores, ranking, what changed), `history.ts` (the price files), `types.ts` (the file formats) |
-| `src/paper/` | Paper trading, pure functions: `trader.ts` (trades each new day, checks fetched prices), `summary.ts` (leaderboards, curves), `types.ts` (the file formats) |
-| `src/ui/` | Screens: watchlist, desk and its tabs, Discover, Paper trading (`paper.ts`), charts, formatting |
+| `src/model/` | The forecasting model, pure functions: `features.ts` (inputs and targets), `linear.ts` (logistic and ridge regression), `gbt.ts` (boosted trees), `walkforward.ts` (training, forecasting, the walk-forward test), `metrics.ts` and `report.ts` (scoring against baselines), `track.ts` (the forecast log and live record) |
+| `src/alerts/` | `summary.ts`: what goes into the nightly Telegram message |
+| `src/paper/` | Paper trading, pure functions: `trader.ts` (trades each new day, checks fetched prices), `portfolio.ts` (the weekly top-k portfolio and its benchmarks), `summary.ts` (leaderboards, curves), `types.ts` (the file formats) |
+| `src/ui/` | Screens: watchlist, desk and its tabs (including `tabs/forecastTab.ts`), Discover, Signals (`signals.ts`), Paper trading (`paper.ts`), charts, formatting |
 | `src/app.ts` | Connects data, analysis and screens |
 | `scripts/scan.ts` | The nightly market scan: fetches the newest days, runs `src/scan/scan.ts`, saves `data/history/` and `public/data/scan/` |
+| `scripts/forecast.ts` | The nightly forecast: retrains, re-tests, forecasts, logs, scores; saves `public/data/model/` and `data/model/log/` |
+| `scripts/notify.ts` | Sends the nightly Telegram summary, once per night |
 | `scripts/paper-trade.ts` | The nightly paper trader: fetches prices, runs `src/paper/trader.ts`, saves `public/paper/` |
 | `tests/` | Vitest unit tests |
-| `public/` | Icons (`npm run icons` rebuilds the PNGs from `favicon.svg`), `paper/` (paper trading files) and `data/` (scan results) |
+| `public/` | Icons (`npm run icons` rebuilds the PNGs from `favicon.svg`), `paper/` (paper trading files) and `data/` (scan results and forecasts) |
 | `data/` | Price history and other files the nightly run keeps but the site doesn't publish |
 
 ## Publishing

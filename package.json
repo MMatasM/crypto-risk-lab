@@ -14,7 +14,8 @@
     "icons": "pwa-assets-generator",
     "scan": "tsx scripts/scan.ts",
     "forecast": "tsx scripts/forecast.ts",
-    "paper": "tsx scripts/paper-trade.ts"
+    "paper": "tsx scripts/paper-trade.ts",
+    "notify": "tsx scripts/notify.ts"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",

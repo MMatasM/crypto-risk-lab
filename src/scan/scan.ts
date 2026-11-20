@@ -70,7 +70,7 @@ export function rank(coins: ScanCoin[]): ScanCoin[] {
   return coins;
 }
 
-export const dayRow = (c: ScanCoin): DayRow => [c.rank, c.composite, c.risk, c.trend, c.price, c.cls.t, c.cons.t];
+export const dayRow = (c: ScanCoin): DayRow => [c.rank, c.composite, c.risk, c.trend, c.price, c.cls.t, c.cons.t, c.mcapRank];
 
 const TONE_ORDER: Record<Tone, number> = { bad: 0, warn: 1, neutral: 2, good: 3 };
 const CONS_ORDER = ["mostly bearish", "leaning bearish", "mixed", "leaning bullish", "mostly bullish"];

@@ -1,19 +1,26 @@
 # The nightly run, shortly after the daily close (00:00 UTC). In order:
 #   1. Market scan: fetch the newest daily closes for the top coins and the watchlist, score and rank them.
-#   2. Paper trading (fake money, real prices): trade the finished days not yet traded.
+#   2. Forecast: retrain the models, test them again on past data, log tonight's forecasts, score the old ones.
+#   3. Paper trading (fake money, real prices): trade the finished days not yet traded.
+#   4. Telegram summary: one message, only when something happened, only if the bot is set up (see README.md).
 # Then save the results back to the repository and republish the site.
 # Safe to run by hand any time (Actions -> Nightly run -> Run workflow): a day is never scanned or traded
 # twice, and missed days are caught up in order. A step that fails doesn't stop the ones after it; the run
 # is still marked failed at the end, so GitHub emails you.
 #
-# Optional but recommended: a free CoinGecko Demo key as the repository secret COINGECKO_DEMO_KEY
-# (see README.md). Without it the scan still works but takes about 45 minutes instead of 6.
+# Strongly recommended: a free CoinGecko Demo key as the repository secret COINGECKO_DEMO_KEY
+# (see README.md). Without it the scan takes over an hour instead of about 6 minutes.
 name: Nightly run
 
 on:
   schedule:
     - cron: "30 0 * * *" # 00:30 UTC every day (GitHub may start it a little late)
   workflow_dispatch:
+    inputs:
+      telegram_test:
+        description: Send a Telegram test message
+        type: boolean
+        default: false
 
 permissions:
   contents: write # commit the updated results
@@ -42,10 +49,22 @@ jobs:
         id: scan
         continue-on-error: true
         run: npm run scan
+      - name: Forecast
+        id: forecast
+        continue-on-error: true
+        run: npm run forecast
       - name: Paper trading
         id: paper
         continue-on-error: true
         run: npm run paper
+      - name: Telegram summary
+        id: notify
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NOTIFY_TEST: ${{ inputs.telegram_test }}
+        run: npm run notify
       - name: Save the results
         id: save
         run: |
@@ -68,7 +87,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run deploy.yml --ref main
       - name: Mark the run failed if a step failed
-        if: steps.scan.outcome == 'failure' || steps.paper.outcome == 'failure'
+        if: steps.scan.outcome == 'failure' || steps.forecast.outcome == 'failure' || steps.paper.outcome == 'failure' || steps.notify.outcome == 'failure'
         run: |
-          echo "Scan: ${{ steps.scan.outcome }}, paper trading: ${{ steps.paper.outcome }}. See the step logs above."
+          echo "Scan: ${{ steps.scan.outcome }}, forecast: ${{ steps.forecast.outcome }}, paper trading: ${{ steps.paper.outcome }}, Telegram: ${{ steps.notify.outcome }}. See the step logs above."
           exit 1

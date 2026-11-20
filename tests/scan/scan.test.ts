@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { History, MarketCoin } from "../../src/data/types";
 import { daysToFetch, mergeHistory, parseCsv, toCsv } from "../../src/scan/history";
 import { addDay, checkScanConfig, dayBefore, diff, pickUniverse, rank, scanCoin } from "../../src/scan/scan";
-import type { ScanCoin } from "../../src/scan/types";
+import type { DayRow, ScanCoin } from "../../src/scan/types";
 import { dates, randomWalk } from "../helpers";
 
 const coin = (id: string, mcap: number, over: Partial<MarketCoin> = {}): MarketCoin => ({
@@ -80,9 +80,9 @@ describe("scanCoin, rank and diff", () => {
   it("reports class and consensus changes, big rank moves, unusual moves, and coins that came or went", () => {
     const a = { ...row("aaa", 3, true), rank: 1 }, b = { ...row("bbb", 5), rank: 20, ret1: 0.3, dayVol: 0.04 }, c = { ...row("ccc", 9), rank: 3, ret1: 0.001 };
     const prev = { date: "2025-12-30", coins: {
-      aaa: [2, 50, 50, 50, 1, a.cls.t === "Avoid for now" ? "Steady uptrend" : "Avoid for now", a.cons.t] as [number, number, number, number, number, string, string],
-      bbb: [2, 50, 50, 50, 1, b.cls.t, b.cons.t] as [number, number, number, number, number, string, string],
-      zzz: [9, 50, 50, 50, 1, "Mixed, no clear trend", "mixed"] as [number, number, number, number, number, string, string],
+      aaa: [2, 50, 50, 50, 1, a.cls.t === "Avoid for now" ? "Steady uptrend" : "Avoid for now", a.cons.t, 1] as DayRow,
+      bbb: [2, 50, 50, 50, 1, b.cls.t, b.cons.t, 2] as DayRow,
+      zzz: [9, 50, 50, 50, 1, "Mixed, no clear trend", "mixed", 3] as DayRow,
     } };
     const ch = diff(prev, [a, b, c]);
     expect(ch[0]).toMatchObject({ id: "aaa", kind: "cls", watch: true });
@@ -102,7 +102,7 @@ describe("scanCoin, rank and diff", () => {
     expect(h.days.map(d => d.date)).toEqual(["2026-01-02", "2026-01-03"]);
     expect(dayBefore(h, "2026-01-03")!.date).toBe("2026-01-02");
     expect(dayBefore(h, "2026-01-02")).toBeUndefined();
-    expect(h.days[0].coins.a).toHaveLength(7);
+    expect(h.days[0].coins.a).toHaveLength(8);
   });
   it("checks the config", () => {
     expect(checkScanConfig({ topN: 150, watchlist: ["bitcoin"], historyDays: 45 })).toEqual([]);

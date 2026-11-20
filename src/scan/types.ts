@@ -85,8 +85,8 @@ export interface ScanFile {
   changes: Change[];
 }
 
-/** One coin on one day in history.json: [rank, composite, risk, trend, price, classification, consensus]. */
-export type DayRow = [number, number, number, number, number, string, string];
+/** One coin on one day in history.json: [rank, composite, risk, trend, price, classification, consensus, market-cap rank]. */
+export type DayRow = [number, number, number, number, number, string, string, number | null];
 export interface ScanDay { date: string; coins: Record<string, DayRow> }
 export interface ScanHistory { days: ScanDay[] }
 
