@@ -1,4 +1,4 @@
 {
-  "primary": "gbt",
-  "note": "Chosen on 20 Nov 2026 by a rule set in advance: the model with the lower Brier score in the 7-day walk-forward test (boosted trees 0.244, logistic regression 0.262). Neither beat the baselines by more than luck would explain, and picking the better of two flatters its test number a little. Both models are logged and scored every night, so the live record shows which one deserves the place."
+  "primary": "logit",
+  "note": "Changed on 20 Nov 2026 from boosted trees, by the same rule set in advance (the lower Brier score in the 7-day walk-forward test), now applied to the seven-year test on Bitvavo prices: logistic regression 0.2477, boosted trees 0.2497. That gap is within what luck would explain, and neither model beat the baselines. Logistic regression was also closer to the truth when it gave a chance (off by 3.6 percentage points on average against 5.6), and at 30 days it was no worse than the baseline while boosted trees clearly were. On one year of data the same rule had picked boosted trees (0.244 against 0.262). Both models are still logged and scored every night, so the live record shows which one deserves the place."
 }
