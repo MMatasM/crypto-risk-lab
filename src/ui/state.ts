@@ -3,11 +3,14 @@ import type { Analysis } from "../analysis/scoring";
 import type { Technicals } from "../analysis/technicals";
 import type { History, MarketCoin } from "../data/types";
 import type { Overlays } from "./charts";
-import type { Strategy } from "../analysis/backtest";
-import type { PaperConfig, PaperState, TradeRecord } from "../paper/types";
+import type { ForecastFile, TrackFile, ValidationFile } from "../model/types";
+import type { PortfolioState, PortfolioTrade } from "../paper/portfolio";
+import type { PaperConfig, PaperState, PaperStrategy, TradeRecord } from "../paper/types";
+import type { ScanConfig, ScanFile } from "../scan/types";
 
-export type Tab = "overview" | "technicals" | "ranges" | "history" | "signals" | "backtest";
-export type View = "analyze" | "discover" | "paper";
+export type Tab = "overview" | "technicals" | "ranges" | "history" | "signals" | "forecast" | "backtest";
+export type View = "analyze" | "discover" | "signals" | "paper";
+export type SigSort = "rank" | "p7" | "p30" | "risk" | "trend" | "ret7" | "mcap";
 export type DiscSort = "mcap" | "quick" | "c30" | "c1y" | "risk" | "liq";
 
 export interface DiscoverState {
@@ -23,7 +26,27 @@ export interface DiscoverState {
 }
 
 /** The paper trading files, as published with the site. */
-export interface PaperData { config: PaperConfig; state: PaperState; trades: TradeRecord[] }
+export interface PaperData { config: PaperConfig; state: PaperState; trades: TradeRecord[]; portfolio?: PortfolioState | null; portfolioTrades?: PortfolioTrade[] }
+
+/** The nightly scan and forecast files, as published with the site (public/data/). */
+export interface SignalsData { scan: ScanFile | null; model: ForecastFile | null; validation: ValidationFile | null; track: TrackFile | null; config: ScanConfig | null }
+
+export interface SignalsViewState {
+  data: SignalsData | null;
+  at: number | null;
+  stale: boolean;
+  err: string | null;
+  loading: boolean;
+  tier: string;
+  sector: string;
+  risk: "all" | "low" | "mid" | "high";
+  sort: SigSort;
+  trackedOnly: boolean;
+  /** Show every change since the scan before, not just the first few. */
+  allChanges: boolean;
+  /** Whether the "how the model was tested" block is open. */
+  details: boolean;
+}
 
 export interface PaperViewState {
   data: PaperData | null;
@@ -35,9 +58,9 @@ export interface PaperViewState {
   /** The coin shown (null = all coins together). */
   coin: string | null;
   /** The strategy highlighted on the chart. */
-  focus: Strategy | null;
+  focus: PaperStrategy | null;
   /** The trade log's filter. */
-  logStrategy: Strategy | "all";
+  logStrategy: PaperStrategy | "all";
   /** Show the whole trade log rather than the newest trades. */
   logAll: boolean;
 }
@@ -60,6 +83,9 @@ export interface AppState {
   taShow: Overlays;
   disc: DiscoverState;
   paper: PaperViewState;
+  /** Coins tracked on this device: on the watchlist and highlighted in Signals. */
+  tracked: string[];
+  signals: SignalsViewState;
 }
 
 /** The actions the screens can trigger. */
@@ -74,4 +100,9 @@ export interface Actions {
   analyzeFromDiscover(id: string): void;
   retryCoin(id: string): void;
   setPaper(patch: Partial<Pick<PaperViewState, "coin" | "focus" | "logStrategy" | "logAll">>): void;
+  /** `quiet` remembers the change without redrawing (for things the browser has already drawn, like an opened block). */
+  setSignals(patch: Partial<Pick<SignalsViewState, "tier" | "sector" | "risk" | "sort" | "trackedOnly" | "allChanges" | "details">>, quiet?: boolean): void;
+  toggleTrack(id: string): void;
+  /** Opens a coin's page (adding it to the watchlist if needed), optionally on a given tab. */
+  openCoin(id: string, tab?: Tab): void;
 }

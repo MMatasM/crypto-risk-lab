@@ -13,11 +13,13 @@ import { renderDesk } from "./ui/desk";
 import { renderDiscover } from "./ui/discover";
 import { esc, stamp } from "./ui/format";
 import { renderPaper } from "./ui/paper";
-import type { Actions, AppState, DiscoverState, PaperData, View } from "./ui/state";
+import { renderSignals } from "./ui/signals";
+import type { Actions, AppState, DiscoverState, PaperData, SignalsData, SignalsViewState, View } from "./ui/state";
 import { renderList } from "./ui/watchlist";
 
 const DEFAULT_WATCH = ["bitcoin", "ethereum", "ripple", "solana", "monero"];
-const K = { key: "crl.key", watch: "crl.watch", sel: "crl.sel", ta: "crl.ta", disc: "crl.disc", pace: "crl.pace" };
+const K = { key: "crl.key", watch: "crl.watch", sel: "crl.sel", ta: "crl.ta", disc: "crl.disc", pace: "crl.pace", track: "crl.track", sig: "crl.sig" };
+const VIEWS: View[] = ["analyze", "discover", "signals", "paper"];
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -42,6 +44,9 @@ export function startApp() {
   if (!watch.includes("bitcoin")) watch.unshift("bitcoin");
   watch = [...new Set(watch)];
   const discPrefs = store.get<Partial<DiscoverState>>(K.disc, {});
+  const sigPrefs = store.get<Partial<SignalsViewState>>(K.sig, {});
+  const tracked = [...new Set(store.get<string[]>(K.track, []).filter(x => typeof x === "string" && x))];
+  for (const id of tracked) if (!watch.includes(id)) watch.push(id); // a tracked coin is always on the watchlist
 
   const s: AppState = {
     watch,
@@ -61,6 +66,11 @@ export function startApp() {
       data: null, at: null, stale: false, err: null, loading: false,
     },
     paper: { data: null, at: null, stale: false, err: null, loading: false, coin: null, focus: null, logStrategy: "all", logAll: false },
+    tracked,
+    signals: {
+      data: null, at: null, stale: false, err: null, loading: false,
+      tier: sigPrefs.tier ?? "all", sector: sigPrefs.sector ?? "", risk: sigPrefs.risk ?? "all", sort: sigPrefs.sort ?? "rank", trackedOnly: false, allChanges: false, details: false,
+    },
   };
   if (!s.watch.includes(s.selected)) s.selected = "bitcoin";
   /** Raw daily history as loaded; s.hists holds it with the live price spliced in. */
@@ -170,6 +180,40 @@ export function startApp() {
    * The paper trading results are files published with the site (public/paper/), updated every night by
    * the GitHub job. The last copy is kept in browser storage for offline use.
    */
+  /** A file published with the site. Null when it isn't there yet (some servers answer a missing file with the app's own page). */
+  const getFile = async (path: string) => {
+    const r = await fetch(path, { cache: "no-store" });
+    if (r.status === 404 || (r.ok && /html/.test(r.headers.get("content-type") ?? ""))) return null;
+    if (!r.ok) throw new Error(`error ${r.status}`);
+    return r.json();
+  };
+
+  /**
+   * The nightly scan and forecasts (public/data/), also files published with the site. Loaded once at
+   * startup (no CoinGecko request involved), so the Signals view and each coin's Forecast tab have them.
+   */
+  const SIGNALS_KEY = CACHE_PREFIX + "signals";
+  const drawSignals = () => { if (s.view === "signals") renderSignals(s, actions); else if (s.view === "analyze" && s.tab === "forecast") renderDesk(s, actions); };
+  async function loadSignals() {
+    const v = s.signals;
+    if (v.loading) return;
+    v.loading = true; v.err = null;
+    if (!v.data) { const saved = store.get<{ t: number; d: SignalsData } | null>(SIGNALS_KEY, null); if (saved) { v.data = saved.d; v.at = saved.t; v.stale = true; } }
+    drawSignals();
+    try {
+      const [scan, model, validation, track, config] = await Promise.all(["scan/latest", "model/latest", "model/validation", "model/track", "scan/config"].map(f => getFile(`./data/${f}.json`)));
+      if (!scan && !config) throw new Error("no files");
+      v.data = { scan, model, validation, track, config };
+      v.at = Date.now(); v.stale = false;
+      store.set(SIGNALS_KEY, { t: v.at, d: v.data });
+      if (s.view === "signals") setStatus("Updated " + stamp(v.at));
+    } catch {
+      v.err = `Couldn't load the nightly scan${navigator.onLine === false ? " (you're offline)" : ""}.${v.data ? " Showing the copy saved " + stamp(v.at!) + "." : ""}`;
+    }
+    v.loading = false;
+    drawSignals();
+  }
+
   const PAPER_KEY = CACHE_PREFIX + "paper";
   async function loadPaper() {
     const p = s.paper;
@@ -177,17 +221,11 @@ export function startApp() {
     p.loading = true; p.err = null;
     if (!p.data) { const saved = store.get<{ t: number; d: PaperData } | null>(PAPER_KEY, null); if (saved) { p.data = saved.d; p.at = saved.t; p.stale = true; } }
     renderPaper(s, actions);
-    const get = async (f: string) => {
-      const r = await fetch(`./paper/${f}`, { cache: "no-store" });
-      // Not there yet (before the first run). Some servers answer a missing file with the app's own page.
-      if (r.status === 404 || (r.ok && /html/.test(r.headers.get("content-type") ?? ""))) return null;
-      if (!r.ok) throw new Error(`error ${r.status}`);
-      return r.json();
-    };
+    const get = (f: string) => getFile(`./paper/${f}`);
     try {
-      const [config, state, trades] = await Promise.all([get("config.json"), get("state.json"), get("trades.json")]);
+      const [config, state, trades, portfolio, portfolioTrades] = await Promise.all([get("config.json"), get("state.json"), get("trades.json"), get("portfolio.json"), get("portfolio-trades.json")]);
       if (!config) throw new Error("no files");
-      p.data = { config, state: state ?? emptyState(), trades: trades ?? [] };
+      p.data = { config, state: state ?? emptyState(), trades: trades ?? [], portfolio: portfolio ?? null, portfolioTrades: portfolioTrades ?? [] };
       p.at = Date.now(); p.stale = false;
       store.set(PAPER_KEY, { t: p.at, d: p.data });
       setStatus("Updated " + stamp(p.at));
@@ -222,6 +260,7 @@ export function startApp() {
       if (id === "bitcoin") return;
       s.watch = s.watch.filter(x => x !== id);
       saveWatch();
+      if (s.tracked.includes(id)) { s.tracked = s.tracked.filter(x => x !== id); store.set(K.track, s.tracked); }
       repo.forgetHistory(id);
       delete raw[id]; delete s.hists[id]; delete s.analyses[id]; delete s.techs[id]; delete s.coinErr[id];
       s.selected = "bitcoin";
@@ -232,16 +271,12 @@ export function startApp() {
     setTab(tab) { s.tab = tab; renderDesk(s, actions); },
     setView(v) {
       s.view = v;
-      $("view-analyze").hidden = v !== "analyze";
-      $("view-discover").hidden = v !== "discover";
-      $("view-paper").hidden = v !== "paper";
-      $("v-analyze").setAttribute("aria-pressed", String(v === "analyze"));
-      $("v-discover").setAttribute("aria-pressed", String(v === "discover"));
-      $("v-paper").setAttribute("aria-pressed", String(v === "paper"));
+      for (const x of VIEWS) { $("view-" + x).hidden = v !== x; $("v-" + x).setAttribute("aria-pressed", String(v === x)); }
       // The address remembers the view, so .../#paper opens straight on paper trading.
       try { history.replaceState(null, "", v === "analyze" ? location.pathname + location.search : "#" + v); } catch { /* ignore */ }
       if (v === "discover") { if (!s.disc.data && !s.disc.loading) void loadDiscover(); else renderDiscover(s, actions); }
       else if (v === "paper") { if (!s.paper.at || s.paper.stale || Date.now() - s.paper.at > 5 * 60e3) void loadPaper(); else renderPaper(s, actions); }
+      else if (v === "signals") { if (!s.signals.at || s.signals.stale || Date.now() - s.signals.at > 5 * 60e3) void loadSignals(); else renderSignals(s, actions); }
       else renderAll();
     },
     toggleOverlay(k) { s.taShow[k] = !s.taShow[k]; store.set(K.ta, s.taShow); renderDesk(s, actions); },
@@ -256,6 +291,20 @@ export function startApp() {
     analyzeFromDiscover(id) { actions.addToWatch(id); actions.setView("analyze"); actions.selectCoin(id); },
     retryCoin(id) { delete s.coinErr[id]; s.lastErr = null; renderDesk(s, actions); void ensureCoin(id); },
     setPaper(patch) { Object.assign(s.paper, patch); renderPaper(s, actions); },
+    setSignals(patch, quiet) {
+      const v = s.signals;
+      Object.assign(v, patch);
+      store.set(K.sig, { tier: v.tier, sector: v.sector, risk: v.risk, sort: v.sort });
+      if (!quiet) drawSignals();
+    },
+    toggleTrack(id) {
+      const on = !s.tracked.includes(id);
+      s.tracked = on ? [...s.tracked, id] : s.tracked.filter(x => x !== id);
+      store.set(K.track, s.tracked);
+      if (on && !s.watch.includes(id)) { actions.addToWatch(id); if (s.view !== "discover") void ensureCoin(id, BACKGROUND); }
+      if (s.view === "signals") renderSignals(s, actions); else if (s.view === "discover") renderDiscover(s, actions); else renderAll();
+    },
+    openCoin(id, tab) { actions.addToWatch(id); if (tab) s.tab = tab; actions.setView("analyze"); actions.selectCoin(id); },
   };
 
   // ----- Search -----
@@ -288,10 +337,8 @@ export function startApp() {
   document.addEventListener("keydown", e => { if (e.key === "Escape") sOut.hidden = true; });
 
   // ----- Views, refresh, settings -----
-  $("v-analyze").onclick = () => actions.setView("analyze");
-  $("v-discover").onclick = () => actions.setView("discover");
-  $("v-paper").onclick = () => actions.setView("paper");
-  $("refresh").onclick = () => { if (s.view === "discover") void loadDiscover(true); else if (s.view === "paper") void loadPaper(); else void loadAll(true); };
+  for (const x of VIEWS) $("v-" + x).onclick = () => actions.setView(x);
+  $("refresh").onclick = () => { if (s.view === "discover") void loadDiscover(true); else if (s.view === "paper") void loadPaper(); else if (s.view === "signals") void loadSignals(); else { void loadAll(true); void loadSignals(); } };
 
   const sb = $("settings-btn"), sp = $("settings"), kIn = $<HTMLInputElement>("key"), kMsg = $("key-msg");
   const keyMsg = (t: string, ok: boolean | null) => { kMsg.textContent = t; kMsg.className = "key-msg" + (ok === true ? " ok" : ok === false ? " bad" : ""); };
@@ -334,5 +381,6 @@ export function startApp() {
   renderAll();
   void loadAll(false);
   const startView = location.hash.slice(1) as View;
-  if (startView === "paper" || startView === "discover") actions.setView(startView);
+  if (startView !== "analyze" && VIEWS.includes(startView)) actions.setView(startView);
+  if (startView !== "signals") void loadSignals();
 }

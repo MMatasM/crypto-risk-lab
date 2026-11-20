@@ -159,3 +159,36 @@ tr.pick.on td{background:var(--accent-soft)}
 .side{display:inline-block;padding:1px 8px;border-radius:999px;font-size:.76rem;font-weight:600}
 .side.buy{background:var(--good-bg);color:var(--good)} .side.sell{background:var(--bad-bg);color:var(--bad)}
 table.log td.reason{color:var(--muted);font-size:.82rem;min-width:240px}
+
+/* Signals and the Forecast tab */
+.star{border:0;background:none;padding:2px 4px;font-size:1.1rem;line-height:1;color:var(--muted)}
+.star[aria-pressed="true"]{color:var(--accent)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+tr.tracked td{background:var(--accent-soft)}
+.band{font-size:.76rem}
+.changes{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:2px;font-size:.9rem}
+.changes li{padding:5px 8px;border-radius:7px}
+.changes li.on{background:var(--accent-soft)}
+.dotk{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;background:var(--muted)}
+.dotk.k-good{background:var(--good)} .dotk.k-bad{background:var(--bad)} .dotk.k-warn{background:var(--warn)}
+details.more{margin:0 0 14px;border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+details.more summary{cursor:pointer;font-weight:600}
+details.more h4{margin:14px 0 6px;font-size:.88rem;font-family:var(--f-display)}
+details.more ul{margin:0;padding-left:18px;display:grid;gap:4px}
+details.more .note{margin:6px 0 10px}
+.verdict p + p{margin-top:6px}
+.gauge{position:relative;height:10px;border-radius:5px;background:var(--bg);margin:12px 0 10px}
+.gauge .range{position:absolute;top:0;bottom:0;background:var(--accent);opacity:.35;border-radius:5px}
+.gauge .half{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--muted)}
+.gauge .dot{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:var(--ink);border:2px solid var(--surface);transform:translate(-50%,-50%)}
+.parts .num{white-space:nowrap;text-align:right}
+#track[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+@media (max-width:560px){.seg{max-width:100%;overflow-x:auto}.seg button{padding:6px 9px;font-size:.86rem;white-space:nowrap}}
+/* On a phone the list keeps the coin, its score, risk and 7-day chance on screen; the rest scrolls sideways. */
+@media (max-width:560px){
+  table.sig th,table.sig td{padding:7px 5px}
+  table.sig th:nth-child(2),table.sig td:nth-child(2){display:none}
+  table.sig .coinname img,table.sig .coinname .muted{display:none}
+  table.sig .coinname b{display:inline-block;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+  .disc{padding:14px 12px}
+}
