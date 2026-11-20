@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { backtest, START_CAPITAL, type Strategy } from "../../src/analysis/backtest";
 import { board, curves, pairCurve } from "../../src/paper/summary";
-import { advance, checkConfig, mergeCloses, optionsFor, STRATEGIES, WARMUP_DAYS } from "../../src/paper/trader";
+import { advance, checkConfig, mergeCloses, optionsFor, PRICE_STRATEGIES as STRATEGIES, WARMUP_DAYS } from "../../src/paper/trader";
 import { emptyState, type PaperConfig, type PaperState, type PriceFile, type TradeRecord } from "../../src/paper/types";
 import { dates, randomWalk } from "../helpers";
 

@@ -7,12 +7,21 @@
  * `rule` (decided from data up to the day before) and `tradeDay` (trading at that day's close).
  */
 import { rule, START_CAPITAL, tradeDay, type BacktestOptions, type Book, type Rule, type Strategy } from "../analysis/backtest";
-import type { Closes, CoinState, PaperConfig, PaperState, PairState, PriceFile, TradeRecord } from "./types";
+import { checkPortfolioConfig } from "./portfolio";
+import type { Closes, CoinState, PaperConfig, PaperState, PaperStrategy, PairState, PriceFile, TradeRecord } from "./types";
 
 /** Closes needed before a coin's first traded day, so every indicator has warmed up (MACD needs 34). */
 export const WARMUP_DAYS = 60;
 
-export const STRATEGIES: Strategy[] = ["hold", "dca", "sma", "cross", "macd", "rsi"];
+/** The price rules shared with the Backtest tab. */
+export const PRICE_STRATEGIES: Strategy[] = ["hold", "dca", "sma", "cross", "macd", "rsi"];
+export const STRATEGIES: PaperStrategy[] = [...PRICE_STRATEGIES, "model"];
+
+/** The model strategy's threshold when the config doesn't give one. */
+export const MODEL_THRESHOLD = 0.55;
+
+/** The forecast's 7-day chance of a rise for each coin, by the day whose close it was made from. */
+export type Signals = Record<string, Record<string, number>>;
 
 /** The backtester options for a pair's locked-in settings, with trading starting at index `start`. */
 export function optionsFor(p: Pick<PairState, "fee" | "slippage" | "settings">, start: number): BacktestOptions {
@@ -37,7 +46,9 @@ export function checkConfig(c: PaperConfig): string[] {
     if (!isInt(s.fast, 2, WARMUP_DAYS - 1) || !isInt(s.slow, 3, WARMUP_DAYS - 1) || s.fast >= s.slow) out.push(`settings.fast and settings.slow must be whole numbers with fast < slow < ${WARMUP_DAYS}`);
     if (!isInt(s.rsiBuyBelow, 1, 99) || !isInt(s.rsiSellAbove, 1, 99) || s.rsiBuyBelow >= s.rsiSellAbove) out.push("settings.rsiBuyBelow must be below settings.rsiSellAbove (both 1 to 99)");
     if (!isInt(s.dcaWeeks, 1, 520)) out.push("settings.dcaWeeks must be a whole number from 1 to 520");
+    if (s.modelThreshold !== undefined && !(typeof s.modelThreshold === "number" && s.modelThreshold >= 0.3 && s.modelThreshold <= 0.9)) out.push("settings.modelThreshold must be a fraction from 0.3 to 0.9 (0.55 = 55%)");
   }
+  if (c.portfolio) out.push(...checkPortfolioConfig(c.portfolio));
   return out;
 }
 
@@ -101,8 +112,12 @@ export const pairOffset = (cs: CoinState, p: PairState) => cs.dates.indexOf(p.st
  * Trades every day in `prices` that hasn't been traded yet, oldest first. A coin seen for the first time
  * starts on its newest close (that is the "first run" start date); a strategy added to the config later
  * starts on the next day traded. Returns a new state; the one passed in is not changed.
+ *
+ * The "model" strategy follows the same timing as the price rules: the decision for day i comes from the
+ * forecast made after day i-1's close (`signals`), and trades at day i's close. It starts on the first day
+ * that has such a forecast; on a later day without one (the forecast job failed) it keeps its position.
  */
-export function advance(state0: PaperState, prices: PriceFile, config: PaperConfig): AdvanceResult {
+export function advance(state0: PaperState, prices: PriceFile, config: PaperConfig, signals: Signals = {}): AdvanceResult {
   const state: PaperState = structuredClone(state0);
   const trades: TradeRecord[] = [], days: Record<string, string[]> = {}, notes: string[] = [];
   for (const coin of config.coins) {
@@ -121,24 +136,29 @@ export function advance(state0: PaperState, prices: PriceFile, config: PaperConf
     if (from >= p.dates.length) continue; // nothing new: already traded today's close
     state.coins[coin] = cs;
     days[coin] = [];
-    const rules = new Map<Strategy, Rule>();
+    const rules = new Map<PaperStrategy, Rule>();
     for (let i = from; i < p.dates.length; i++) {
       const date = p.dates[i], close = p.closes[i];
       cs.dates.push(date);
       days[coin].push(date);
       for (const strategy of config.strategies) {
         let pair = cs.pairs[strategy];
+        const chance = strategy === "model" ? signals[coin]?.[p.dates[i - 1]] : undefined;
+        if (strategy === "model" && !pair && chance == null) continue; // no forecast yet: the pair hasn't started
         if (!pair) {
           pair = { strategy, startDate: date, fee: config.fee, slippage: config.slippage, settings: { ...config.settings }, cash: START_CAPITAL, units: 0, held: false, trades: 0, equity: [] };
           cs.pairs[strategy] = pair;
         }
         let r = rules.get(strategy);
-        if (!r && strategy !== "dca") { r = rule(p.closes, strategy, optionsFor(pair, 0)); rules.set(strategy, r); }
-        const want = r ? r.want(i, pair.held) : false;
+        if (!r && strategy !== "dca" && strategy !== "model") { r = rule(p.closes, strategy, optionsFor(pair, 0)); rules.set(strategy, r); }
+        const threshold = pair.settings.modelThreshold ?? MODEL_THRESHOLD;
+        const want = strategy === "model" ? (chance == null ? pair.held : chance > threshold) : r ? r.want(i, pair.held) : false;
         const book: Book = { cash: pair.cash, units: pair.units, trades: pair.trades };
-        const fill = tradeDay(book, strategy, pair.equity.length, close, want, { fee: pair.fee, slippage: pair.slippage }, START_CAPITAL / pair.settings.dcaWeeks);
+        // tradeDay only tells DCA apart from the rules that are either in or out, which is what the model is.
+        const fill = tradeDay(book, strategy === "model" ? "hold" : strategy, pair.equity.length, close, want, { fee: pair.fee, slippage: pair.slippage }, START_CAPITAL / pair.settings.dcaWeeks);
         if (fill) {
-          const reason = r ? r.why(i, want) : `Weekly buy ${book.trades} of ${pair.settings.dcaWeeks}`;
+          const reason = strategy === "model" ? `7-day chance of a rise ${((chance ?? 0) * 100).toFixed(0)}% was ${want ? "above" : "not above"} ${(threshold * 100).toFixed(0)}%`
+            : r ? r.why(i, want) : `Weekly buy ${book.trades} of ${pair.settings.dcaWeeks}`;
           trades.push({ date, coin, strategy, side: fill.side, close: fill.close, price: fill.price, units: fill.units, amount: fill.amount, fee: fill.fee, slippage: fill.slippage, reason });
         }
         pair.cash = book.cash; pair.units = book.units; pair.trades = book.trades; pair.held = want;

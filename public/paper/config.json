@@ -1,6 +1,6 @@
 {
   "coins": ["bitcoin", "ethereum", "ripple", "solana", "monero"],
-  "strategies": ["hold", "dca", "sma", "cross", "macd", "rsi"],
+  "strategies": ["hold", "dca", "sma", "cross", "macd", "rsi", "model"],
   "fee": 0.0025,
   "slippage": 0.001,
   "settings": {
@@ -9,6 +9,14 @@
     "slow": 50,
     "rsiBuyBelow": 30,
     "rsiSellAbove": 70,
-    "dcaWeeks": 52
+    "dcaWeeks": 52,
+    "modelThreshold": 0.55
+  },
+  "portfolio": {
+    "k": 5,
+    "universe": 50,
+    "maxWeight": 0.4,
+    "rebalanceDays": 7,
+    "trendDays": 50
   }
 }
