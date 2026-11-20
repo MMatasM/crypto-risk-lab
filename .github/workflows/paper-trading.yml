@@ -1,10 +1,14 @@
-# Paper trading (fake money, real prices): every night shortly after the daily close (00:00 UTC), fetch the
-# closes from CoinGecko, trade the finished days not yet traded, save public/paper/*.json back to the
-# repository and republish the site. Safe to run by hand any time (Actions -> Paper trading -> Run workflow):
-# a day is never traded twice, and missed days are caught up in order.
+# The nightly run, shortly after the daily close (00:00 UTC). In order:
+#   1. Market scan: fetch the newest daily closes for the top coins and the watchlist, score and rank them.
+#   2. Paper trading (fake money, real prices): trade the finished days not yet traded.
+# Then save the results back to the repository and republish the site.
+# Safe to run by hand any time (Actions -> Nightly run -> Run workflow): a day is never scanned or traded
+# twice, and missed days are caught up in order. A step that fails doesn't stop the ones after it; the run
+# is still marked failed at the end, so GitHub emails you.
 #
-# Optional: a free CoinGecko Demo key as the repository secret COINGECKO_DEMO_KEY (see README.md).
-name: Paper trading
+# Optional but recommended: a free CoinGecko Demo key as the repository secret COINGECKO_DEMO_KEY
+# (see README.md). Without it the scan still works but takes about 45 minutes instead of 6.
+name: Nightly run
 
 on:
   schedule:
@@ -20,9 +24,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  trade:
+  nightly:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 150
+    env:
+      COINGECKO_DEMO_KEY: ${{ secrets.COINGECKO_DEMO_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,14 +38,18 @@ jobs:
       - run: npm ci
       - name: Test (never trade with broken code)
         run: npm test
-      - name: Trade
-        env:
-          COINGECKO_DEMO_KEY: ${{ secrets.COINGECKO_DEMO_KEY }}
+      - name: Market scan
+        id: scan
+        continue-on-error: true
+        run: npm run scan
+      - name: Paper trading
+        id: paper
+        continue-on-error: true
         run: npm run paper
       - name: Save the results
         id: save
         run: |
-          git add public/paper
+          git add public/paper public/data data
           if git diff --cached --quiet; then
             echo "Nothing new to save."
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -47,7 +57,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Paper trading: run of $(date -u +%F)"
+          git commit -m "Nightly run of $(date -u +%F)"
           git pull --rebase
           git push
           echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -57,3 +67,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run deploy.yml --ref main
+      - name: Mark the run failed if a step failed
+        if: steps.scan.outcome == 'failure' || steps.paper.outcome == 'failure'
+        run: |
+          echo "Scan: ${{ steps.scan.outcome }}, paper trading: ${{ steps.paper.outcome }}. See the step logs above."
+          exit 1

@@ -1,0 +1,11 @@
+{
+  "topN": 150,
+  "watchlist": [
+    "bitcoin",
+    "ethereum",
+    "ripple",
+    "solana",
+    "monero"
+  ],
+  "historyDays": 45
+}

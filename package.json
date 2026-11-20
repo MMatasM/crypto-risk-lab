@@ -12,6 +12,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit && tsc --noEmit -p scripts",
     "icons": "pwa-assets-generator",
+    "scan": "tsx scripts/scan.ts",
+    "forecast": "tsx scripts/forecast.ts",
     "paper": "tsx scripts/paper-trade.ts"
   },
   "devDependencies": {

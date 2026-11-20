@@ -1,10 +1,11 @@
 /** The Discover screener: the top 250 coins by market cap, sorted into size tiers and patterns. */
 import { isNoise, screen, usdRate, type Screen } from "../analysis/screen";
 import type { MarketCoin } from "../data/types";
+import { SECTORS as SCAN_SECTORS } from "../scan/types";
 import { cls, esc, eur, pc, pill, stamp } from "./format";
 import type { Actions, AppState, DiscSort } from "./state";
 
-export const SECTORS: [string, string][] = [["", "All coins"], ["layer-1", "Layer 1"], ["decentralized-finance-defi", "DeFi"], ["artificial-intelligence", "AI"], ["meme-token", "Meme"], ["real-world-assets-rwa", "Real-world assets"], ["gaming", "Gaming"], ["privacy-coins", "Privacy"]];
+export const SECTORS: [string, string][] = [["", "All coins"], ...SCAN_SECTORS];
 const TIERS: [string, string][] = [["all", "All sizes"], ["mega", "Mega (€50B+)"], ["large", "Large (€10–50B)"], ["mid", "Mid (€1–10B)"], ["small", "Small (€100M–1B)"], ["micro", "Micro (<€100M)"]];
 const SORTS: [DiscSort, string][] = [["mcap", "Market cap"], ["quick", "Screen score"], ["c30", "30-day change"], ["c1y", "1-year change"], ["risk", "Lowest risk"], ["liq", "Trading activity"]];
 
