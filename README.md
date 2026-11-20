@@ -188,6 +188,51 @@ list still names 59 coins without an EUR market (32 marked delisted, the rest su
 longer ago aren't named at all. So at least one coin in eight that could once be bought there is absent, and
 those are mostly failures; every "buy and hold everything" number is therefore still somewhat too rosy.
 
+## Long-term test (seven years, per market phase)
+
+The one-year test above covers a single market phase. `npm run longtest` re-runs the **same models, the same
+16 inputs and the same strict walk-forward method** on the Bitvavo history: 418 coins, September 2019 to
+November 2026, about 390,000 forecasts per horizon. It also trades the paper strategies over those years with
+the paper trader's own code. No network; nothing is tuned to the results; the nightly run doesn't call it.
+
+```powershell
+npm run longtest             # about 15 minutes the first time (it trains ~740 weekly models on several CPU cores)
+npm run longtest -- --fresh  # train again instead of reusing the saved forecasts in .cache/
+```
+
+It writes `public/data/longtest/report.json`, shown in the app under **Signals**.
+
+**How it is scored.** Overall, per calendar year, with Bitcoin above or below its 200-day average, and for
+today's scanned coins against all the others: hit rate, Brier score, calibration and the rank correlation
+between forecast and outcome, each next to the same baselines as the nightly test. **Significance:** a block
+bootstrap by week. Whole calendar weeks are redrawn at random 2,000 times, in runs of 2 weeks (7-day
+forecasts) or 9 (30-day) so overlapping forecasts stay together; "beat the baseline" is only said when the
+whole 95% range of the difference is on the better side of zero. Strategies get the same check on how much
+faster they grew than their benchmark.
+
+**How the strategies are run.** Fee 0.25% and slippage 0.10% per trade, decided after one close and traded
+at the next, exactly as in paper trading. To include coins listed later and coins that later collapsed, the
+money is split afresh every 1 January over every coin tradable that day. The weekly top-5 picks from the 50
+most traded coins on Bitvavo (its public data has no market caps, so volume stands in for size).
+
+**Results (run of 20 Nov 2026).**
+
+- **7-day forecasts:** prices rose in only 43.5% of cases. Boosted trees were right 55.5% of the time (Brier
+  0.2497), logistic regression 54.8% (0.2477); simply using the share of rises seen so far was right 56.2%
+  (0.2469). Neither model beat that baseline overall or in any single year; the trees were clearly worse in
+  2020 and whenever Bitcoin was below its 200-day average.
+- **30-day forecasts:** the trees were clearly *worse* than the baseline (0.2611 against 0.2439) and off by
+  11 percentage points in calibration; logistic regression was no different from the baseline.
+- **Ranking coins:** a small, real skill. Rank correlation 0.06 (95% range 0.05 to 0.08) for the trees; the
+  fifth of coins they rated highest did 0.33 percentage points better over the next week than the average
+  coin (range 0.11 to 0.55). A weekly switch costs about 0.7 points in fee and slippage, so it doesn't pay.
+- **Strategies:** buying and holding Bitcoin made about 31% a year with a worst drop of 74%. Buying and
+  holding every coin made 3% a year with a worst drop of 94%. The trend rules and the model strategies fell
+  less (worst drops of 50% to 73% on the whole market) but none grew faster than its benchmark by more than
+  luck would explain: every 95% range includes zero. The top-5 rotation's big total (boosted trees) was made
+  in 2020 and 2021; it trailed Bitcoin in each of 2023, 2024 and 2025, and the same rotation on the logistic
+  model ended below Bitcoin.
+
 ## Telegram alerts (optional)
 
 One message a night at most, and only when something happened: a tracked coin (the `watchlist` in

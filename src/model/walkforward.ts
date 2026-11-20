@@ -111,21 +111,36 @@ export interface WalkForward {
 /** The rows whose h-day outcome was fully known before `day`. */
 export const knownBefore = (samples: readonly Sample[], h: Horizon, day: number) => samples.filter(s => s.fwd[h] != null && s.day + h < day);
 
+/** The first day of every step of the walk-forward test: one every `o.step` days once `o.minTrainDays` days of outcomes are known. */
+export function walkForwardStarts(labelled: readonly Sample[], h: Horizon, o: ModelOptions = MODEL_DEFAULTS): number[] {
+  const days = [...new Set(labelled.map(s => s.day))].sort((a, b) => a - b), out: number[] = [];
+  if (days.length <= o.minTrainDays) return out;
+  for (let start = days[o.minTrainDays - 1] + h + 1; start <= days[days.length - 1]; start += o.step) out.push(start);
+  return out;
+}
+
+/**
+ * One step: train on the outcomes fully known before `start`, forecast the `o.step` days from `start` on.
+ * `labelled` holds only rows whose h-day outcome exists. Null when the step has no days to forecast.
+ */
+export function walkForwardStep(labelled: readonly Sample[], h: Horizon, start: number, o: ModelOptions = MODEL_DEFAULTS): { rows: Tested[]; trainRows: number; trainedThrough: number } | null {
+  const test = labelled.filter(s => s.day >= start && s.day < start + o.step);
+  if (!test.length) return null;
+  const train = knownBefore(labelled, h, start);
+  const f = fitModels(train, h, o);
+  return { rows: test.map(s => { const r = s.fwd[h] as number; return { coin: s.coin, day: s.day, r, y: r > 0 ? 1 : 0, ...forecast(f, s.x) }; }), trainRows: train.length, trainedThrough: f.lastDay };
+}
+
 export function walkForward(samples: readonly Sample[], h: Horizon, o: ModelOptions = MODEL_DEFAULTS): WalkForward {
   const labelled = samples.filter(s => s.fwd[h] != null);
-  const days = [...new Set(labelled.map(s => s.day))].sort((a, b) => a - b);
   const out: WalkForward = { rows: [], folds: 0, firstTrainRows: 0, lastTrainRows: 0, steps: [] };
-  if (days.length <= o.minTrainDays) return out;
-  const last = days[days.length - 1];
-  for (let start = days[o.minTrainDays - 1] + h + 1; start <= last; start += o.step) {
-    const test = labelled.filter(s => s.day >= start && s.day < start + o.step);
-    if (!test.length) continue;
-    const train = knownBefore(labelled, h, start);
-    const f = fitModels(train, h, o);
-    for (const s of test) { const r = s.fwd[h] as number; out.rows.push({ coin: s.coin, day: s.day, r, y: r > 0 ? 1 : 0, ...forecast(f, s.x) }); }
-    if (!out.folds++) out.firstTrainRows = train.length;
-    out.lastTrainRows = train.length;
-    out.steps.push({ start, trainedThrough: f.lastDay });
+  for (const start of walkForwardStarts(labelled, h, o)) {
+    const step = walkForwardStep(labelled, h, start, o);
+    if (!step) continue;
+    out.rows.push(...step.rows);
+    if (!out.folds++) out.firstTrainRows = step.trainRows;
+    out.lastTrainRows = step.trainRows;
+    out.steps.push({ start, trainedThrough: step.trainedThrough });
   }
   return out;
 }
