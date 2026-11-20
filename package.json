@@ -15,7 +15,8 @@
     "scan": "tsx scripts/scan.ts",
     "forecast": "tsx scripts/forecast.ts",
     "paper": "tsx scripts/paper-trade.ts",
-    "notify": "tsx scripts/notify.ts"
+    "notify": "tsx scripts/notify.ts",
+    "bitvavo": "tsx scripts/bitvavo-history.ts"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",

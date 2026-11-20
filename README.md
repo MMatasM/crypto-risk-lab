@@ -159,6 +159,35 @@ same code as the walk-forward test. This record can't have been fitted to the pa
 | `public/data/model/track.json` | The live record: logged forecasts whose outcome is known, scored the same way. |
 | `data/model/log/` | Every forecast ever made, one file per night. |
 
+## Long history from Bitvavo (research only)
+
+CoinGecko's free data stops at one year, so the long-term test uses **Bitvavo's public market data**: daily
+EUR candles for every market Bitvavo lists, back to March 2019. Public endpoints only: no API key, no
+account, no orders. The nightly run doesn't fetch or read these files.
+
+```powershell
+npm run bitvavo    # downloads the history (about 4 minutes the first time; later runs only add new days)
+```
+
+| File | What is in it |
+|---|---|
+| `data/bitvavo/<TICKER>.csv` | One market's daily close and volume in EUR, the same format as `data/history/`. |
+| `data/bitvavo/index.json` | Every market with its first and last day, the assets Bitvavo no longer has a market for, and which market each scanned coin is. |
+
+**What it covers (20 Nov 2026).** 418 coins after leaving out 6 stablecoins: 29 with 7 or more years, 61 with
+5 to 7, 50 with 3 to 5, 109 with 2 to 3, 97 with 1 to 2 and 72 with under a year. Of the 148 scanned coins,
+100 trade on Bitvavo in EUR; 48 don't (among them Monero, Zcash, Dash and the exchange tokens such as OKB
+and LEO). A scanned coin is matched to a market only when its prices agree with CoinGecko's, never by ticker
+alone (Terra Luna Classic trades as `LUNA`, IOTA as `MIOTA`).
+
+**Survivorship bias: reduced, not gone.** The test uses every coin Bitvavo lists today, each from its first
+day there, not just today's top coins. That brings in the losers that are still listed: 276 of the 418 now
+trade more than 90% below their own Bitvavo high (FTX's token and Terra Luna Classic among them). What is
+still missing: coins Bitvavo has removed. Its public API returns nothing for a delisted market. The asset
+list still names 59 coins without an EUR market (32 marked delisted, the rest suspended), and coins removed
+longer ago aren't named at all. So at least one coin in eight that could once be bought there is absent, and
+those are mostly failures; every "buy and hold everything" number is therefore still somewhat too rosy.
+
 ## Telegram alerts (optional)
 
 One message a night at most, and only when something happened: a tracked coin (the `watchlist` in
