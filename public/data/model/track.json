@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-20T12:41:11.556Z",
+  "generatedAt": "2026-11-21T07:37:35.018Z",
   "since": "2026-11-19",
-  "latest": "2026-11-19",
-  "nights": 1,
+  "latest": "2026-11-20",
+  "nights": 2,
   "horizons": {
     "7": {
       "horizon": 7,
@@ -128,7 +128,7 @@
         }
       },
       "byCoin": {},
-      "pending": 149,
+      "pending": 301,
       "firstResolves": "2026-11-26"
     },
     "30": {
@@ -255,7 +255,7 @@
         }
       },
       "byCoin": {},
-      "pending": 149,
+      "pending": 301,
       "firstResolves": "2026-12-19"
     }
   }

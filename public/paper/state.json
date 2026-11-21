@@ -1,10 +1,10 @@
 {
   "version": 1,
   "startDate": "2026-11-18",
-  "lastDate": "2026-11-19",
+  "lastDate": "2026-11-20",
   "coins": {
     "bitcoin": {
-      "dates": ["2026-11-18","2026-11-19"],
+      "dates": ["2026-11-18","2026-11-19","2026-11-20"],
       "pairs": {
         "hold": {
           "strategy": "hold",
@@ -23,7 +23,7 @@
           "units": 0.017355795129496112,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034965,979.8827743669464]
+          "equity": [996.5034965034965,979.8827743669464,930.3351216382331]
         },
         "dca": {
           "strategy": "dca",
@@ -42,7 +42,7 @@
           "units": 0.0003337652909518483,
           "held": false,
           "trades": 1,
-          "equity": [999.9327595481441,999.6131302762874]
+          "equity": [999.9327595481441,999.6131302762874,998.6602908007352]
         },
         "sma": {
           "strategy": "sma",
@@ -61,7 +61,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "cross": {
           "strategy": "cross",
@@ -80,7 +80,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "macd": {
           "strategy": "macd",
@@ -99,7 +99,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "rsi": {
           "strategy": "rsi",
@@ -118,12 +118,32 @@
           "units": 0.017355795129496112,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034965,979.8827743669464]
+          "equity": [996.5034965034965,979.8827743669464,930.3351216382331]
+        },
+        "model": {
+          "strategy": "model",
+          "startDate": "2026-11-20",
+          "fee": 0.0025,
+          "slippage": 0.001,
+          "settings": {
+            "smaLength": 50,
+            "fast": 20,
+            "slow": 50,
+            "rsiBuyBelow": 30,
+            "rsiSellAbove": 70,
+            "dcaWeeks": 52,
+            "modelThreshold": 0.55
+          },
+          "cash": 1000,
+          "units": 0,
+          "held": false,
+          "trades": 0,
+          "equity": [1000]
         }
       }
     },
     "ethereum": {
-      "dates": ["2026-11-18","2026-11-19"],
+      "dates": ["2026-11-18","2026-11-19","2026-11-20"],
       "pairs": {
         "hold": {
           "strategy": "hold",
@@ -142,7 +162,7 @@
           "units": 0.6159412679885484,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034965,985.9422213041191]
+          "equity": [996.5034965034965,985.9422213041191,909.09236184412]
         },
         "dca": {
           "strategy": "dca",
@@ -161,7 +181,7 @@
           "units": 0.011845024384395162,
           "held": false,
           "trades": 1,
-          "equity": [999.9327595481441,999.7296581020022]
+          "equity": [999.9327595481441,999.7296581020022,998.2517761893099]
         },
         "sma": {
           "strategy": "sma",
@@ -180,7 +200,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "cross": {
           "strategy": "cross",
@@ -199,7 +219,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "macd": {
           "strategy": "macd",
@@ -218,7 +238,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "rsi": {
           "strategy": "rsi",
@@ -237,12 +257,32 @@
           "units": 0.6159412679885484,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034965,985.9422213041191]
+          "equity": [996.5034965034965,985.9422213041191,909.09236184412]
+        },
+        "model": {
+          "strategy": "model",
+          "startDate": "2026-11-20",
+          "fee": 0.0025,
+          "slippage": 0.001,
+          "settings": {
+            "smaLength": 50,
+            "fast": 20,
+            "slow": 50,
+            "rsiBuyBelow": 30,
+            "rsiSellAbove": 70,
+            "dcaWeeks": 52,
+            "modelThreshold": 0.55
+          },
+          "cash": 1000,
+          "units": 0,
+          "held": false,
+          "trades": 0,
+          "equity": [1000]
         }
       }
     },
     "ripple": {
-      "dates": ["2026-11-18","2026-11-19"],
+      "dates": ["2026-11-18","2026-11-19","2026-11-20"],
       "pairs": {
         "hold": {
           "strategy": "hold",
@@ -261,7 +301,7 @@
           "units": 1130.8865535195287,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034966,989.3188057895167]
+          "equity": [996.5034965034966,989.3188057895167,937.1452026753686]
         },
         "dca": {
           "strategy": "dca",
@@ -280,7 +320,7 @@
           "units": 21.74781833691401,
           "held": false,
           "trades": 1,
-          "equity": [999.9327595481441,999.7945924190291]
+          "equity": [999.9327595481441,999.7945924190291,998.7912538976032]
         },
         "sma": {
           "strategy": "sma",
@@ -299,7 +339,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "cross": {
           "strategy": "cross",
@@ -318,7 +358,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "macd": {
           "strategy": "macd",
@@ -337,7 +377,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "rsi": {
           "strategy": "rsi",
@@ -356,12 +396,32 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
+        },
+        "model": {
+          "strategy": "model",
+          "startDate": "2026-11-20",
+          "fee": 0.0025,
+          "slippage": 0.001,
+          "settings": {
+            "smaLength": 50,
+            "fast": 20,
+            "slow": 50,
+            "rsiBuyBelow": 30,
+            "rsiSellAbove": 70,
+            "dcaWeeks": 52,
+            "modelThreshold": 0.55
+          },
+          "cash": 1000,
+          "units": 0,
+          "held": false,
+          "trades": 0,
+          "equity": [1000]
         }
       }
     },
     "solana": {
-      "dates": ["2026-11-18","2026-11-19"],
+      "dates": ["2026-11-18","2026-11-19","2026-11-20"],
       "pairs": {
         "hold": {
           "strategy": "hold",
@@ -380,7 +440,7 @@
           "units": 14.864042813731313,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034965,990.2745336388998]
+          "equity": [996.5034965034965,990.2745336388998,931.4079012262032]
         },
         "dca": {
           "strategy": "dca",
@@ -399,7 +459,7 @@
           "units": 0.28584697718714064,
           "held": false,
           "trades": 1,
-          "equity": [999.9327595481441,999.8129718007481]
+          "equity": [999.9327595481441,999.8129718007481,998.680921177427]
         },
         "sma": {
           "strategy": "sma",
@@ -418,7 +478,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "cross": {
           "strategy": "cross",
@@ -437,7 +497,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "macd": {
           "strategy": "macd",
@@ -456,7 +516,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "rsi": {
           "strategy": "rsi",
@@ -475,12 +535,32 @@
           "units": 14.957539685113314,
           "held": true,
           "trades": 1,
-          "equity": [1000,996.5034965034965]
+          "equity": [1000,996.5034965034965,937.2665848855827]
+        },
+        "model": {
+          "strategy": "model",
+          "startDate": "2026-11-20",
+          "fee": 0.0025,
+          "slippage": 0.001,
+          "settings": {
+            "smaLength": 50,
+            "fast": 20,
+            "slow": 50,
+            "rsiBuyBelow": 30,
+            "rsiSellAbove": 70,
+            "dcaWeeks": 52,
+            "modelThreshold": 0.55
+          },
+          "cash": 1000,
+          "units": 0,
+          "held": false,
+          "trades": 0,
+          "equity": [1000]
         }
       }
     },
     "monero": {
-      "dates": ["2026-11-18","2026-11-19"],
+      "dates": ["2026-11-18","2026-11-19","2026-11-20"],
       "pairs": {
         "hold": {
           "strategy": "hold",
@@ -499,7 +579,7 @@
           "units": 2.1630039768739504,
           "held": true,
           "trades": 1,
-          "equity": [996.5034965034965,980.8159757664009]
+          "equity": [996.5034965034965,980.8159757664009,900.2098351158279]
         },
         "dca": {
           "strategy": "dca",
@@ -518,7 +598,7 @@
           "units": 0.041596230324499044,
           "held": false,
           "trades": 1,
-          "equity": [999.9327595481441,999.6310764570461]
+          "equity": [999.9327595481441,999.6310764570461,998.080958367612]
         },
         "sma": {
           "strategy": "sma",
@@ -537,7 +617,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "cross": {
           "strategy": "cross",
@@ -552,11 +632,11 @@
             "rsiSellAbove": 70,
             "dcaWeeks": 52
           },
-          "cash": 0,
-          "units": 2.1630039768739504,
-          "held": true,
-          "trades": 1,
-          "equity": [996.5034965034965,980.8159757664009]
+          "cash": 897.0613512175104,
+          "units": 0,
+          "held": false,
+          "trades": 2,
+          "equity": [996.5034965034965,980.8159757664009,897.0613512175104]
         },
         "macd": {
           "strategy": "macd",
@@ -575,7 +655,7 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
         },
         "rsi": {
           "strategy": "rsi",
@@ -594,7 +674,27 @@
           "units": 0,
           "held": false,
           "trades": 0,
-          "equity": [1000,1000]
+          "equity": [1000,1000,1000]
+        },
+        "model": {
+          "strategy": "model",
+          "startDate": "2026-11-20",
+          "fee": 0.0025,
+          "slippage": 0.001,
+          "settings": {
+            "smaLength": 50,
+            "fast": 20,
+            "slow": 50,
+            "rsiBuyBelow": 30,
+            "rsiSellAbove": 70,
+            "dcaWeeks": 52,
+            "modelThreshold": 0.55
+          },
+          "cash": 1000,
+          "units": 0,
+          "held": false,
+          "trades": 0,
+          "equity": [1000]
         }
       }
     }

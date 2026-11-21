@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "startDate": "2026-11-20",
+  "lastDate": "2026-11-20",
+  "dates": ["2026-11-20"],
+  "fee": 0.0025,
+  "slippage": 0.001,
+  "settings": {
+    "k": 5,
+    "universe": 50,
+    "maxWeight": 0.4,
+    "rebalanceDays": 7,
+    "trendDays": 50
+  },
+  "books": {
+    "topk": {
+      "cash": 1000,
+      "units": {},
+      "trades": 0,
+      "equity": [1000]
+    },
+    "btc": {
+      "cash": 0,
+      "units": {
+        "bitcoin": 0.018590194144972365
+      },
+      "trades": 1,
+      "equity": [996.5034965034966]
+    },
+    "equal": {
+      "cash": 0,
+      "units": {
+        "bitcoin": 0.0003718038828994473,
+        "ethereum": 0.013503306219541872,
+        "binancecoin": 0.040525179621479605,
+        "ripple": 24.050326491856858,
+        "solana": 0.31805765479465575,
+        "tron": 72.48748521928448,
+        "hyperliquid": 0.35886017020837613,
+        "zcash": 0.02883145635148553,
+        "dogecoin": 402.8092266724242,
+        "monero": 0.04788752448207866,
+        "leo-token": 2.3914534531394267,
+        "whitebit": 0.388356980235254,
+        "chainlink": 2.563532683045444,
+        "cardano": 152.9931678599103,
+        "stellar": 171.68010335824812,
+        "bitcoin-cash": 0.11248737492291594,
+        "near": 7.686327607488841,
+        "litecoin": 0.5389681825013358,
+        "canton-network": 292.94732111371735,
+        "avalanche-2": 3.358131967662905,
+        "uniswap": 4.894577234351953,
+        "the-open-network": 22.31519528338083,
+        "sui": 33.61861783287725,
+        "rain": 5964.6187888779195,
+        "hedera-hashgraph": 424.07566792698293,
+        "bittensor": 0.12105750168575515,
+        "shiba-inu": 6107580.2534655705,
+        "crypto-com-chain": 549.0855240847575,
+        "quant-network": 0.15728216652453478,
+        "memecore": 25.432966426723038,
+        "okb": 0.2777843449097241,
+        "aave": 0.22348296942487697,
+        "pepe": 6302156.637324252,
+        "world-liberty-financial": 497.4109713324122,
+        "ondo-finance": 77.70921461984828,
+        "ethena": 221.0947654713927,
+        "htx-dao": 14941560.084517423,
+        "mantle": 58.240049307455216,
+        "aster-2": 43.65863403914654,
+        "polkadot": 33.04721240257463,
+        "just": 152.72770337482217,
+        "internet-computer": 10.811468529421612,
+        "pump-fun": 9025.07402832326,
+        "morpho": 14.296431142812336,
+        "bitget-token": 14.02250876614049,
+        "venice-token": 1.0564845416529116,
+        "sky": 498.96891368547296,
+        "bitway": 33.40190551108623,
+        "worldcoin-wld": 95.1765470988855,
+        "ethereum-classic": 4.002533452208457
+      },
+      "trades": 50,
+      "equity": [996.5034965034976]
+    }
+  },
+  "lastRebalance": "2026-11-20",
+  "marks": {},
+  "decision": {
+    "date": "2026-11-20",
+    "rankedOn": "2026-11-19",
+    "picks": [],
+    "note": "Bitcoin closed below its 50-day average, so the portfolio is in cash."
+  }
+}
